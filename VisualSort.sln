@@ -1,0 +1,24 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualSort", "VisualSort\VisualSort\VisualSort.csproj", "{458E346E-6993-4D40-B982-C23CD87779FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualSortContent", "VisualSort\VisualSortContent\VisualSortContent.contentproj", "{C8F8CCC3-5E3E-4EE8-9D18-E6AC03E9C8F6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{458E346E-6993-4D40-B982-C23CD87779FF}.Debug|x86.ActiveCfg = Debug|x86
+		{458E346E-6993-4D40-B982-C23CD87779FF}.Debug|x86.Build.0 = Debug|x86
+		{458E346E-6993-4D40-B982-C23CD87779FF}.Release|x86.ActiveCfg = Release|x86
+		{458E346E-6993-4D40-B982-C23CD87779FF}.Release|x86.Build.0 = Release|x86
+		{C8F8CCC3-5E3E-4EE8-9D18-E6AC03E9C8F6}.Debug|x86.ActiveCfg = Debug|x86
+		{C8F8CCC3-5E3E-4EE8-9D18-E6AC03E9C8F6}.Release|x86.ActiveCfg = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
