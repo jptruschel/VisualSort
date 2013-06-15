@@ -25,7 +25,7 @@ namespace VisualSort
             using (MainForm game = new MainForm())
             {
                 game.IsMouseVisible = true;
-                game.Window.Title = "Visual Sort";
+                game.Window.Title = "VisualSort";
                 game.Run();
             }
         }

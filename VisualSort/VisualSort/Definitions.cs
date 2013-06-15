@@ -40,6 +40,81 @@ namespace VisualSort
             return "Bloco: " + Bloco + "; Offset: " + Offset;
         }
     }
+    // Uma estrutura que contém uma lista de inteiros - usada como saída das funções de busca
+    //   CUIDADO: não usar = para trocar o valor de uma ListInt, use Assign!
+    class ListInt
+    {
+        private List<Int64> List;
+        public ListInt()
+        {
+            List = new List<Int64>();
+        }
+        public int AddValue(Int64 Value)
+        {
+            int i = List.IndexOf(Value);
+            if (i == -1)
+            {
+                List.Add(Value);
+                return List.Count - 1;
+            }
+            else
+                return i;
+        }
+        public bool RemoveValue(Int64 Value)
+        {
+            return List.Remove(Value);
+        }
+        public void RemoveAt(int Index)
+        {
+            List.RemoveAt(Index);
+        }
+        public Int64 ValueAt(int Index)
+        {
+            if (Index < List.Count)
+                return this.List[Index];
+            return -1;
+        }
+        public bool SetValueAt(int Index, Int64 Value)
+        {
+            if (!this.Contains(Value))
+            {
+                if (Index < List.Count)
+                {
+                    this.List[Index] = Value;
+                    return true;
+                }
+                else
+                    return false;
+            }
+            else
+                return false;
+        }
+        public bool Contains(params Int64[] Values)
+        {
+            foreach (Int64 i in Values)
+                if (!List.Contains(i))
+                    return false;
+            return true;
+        }
+        public void Assign(ListInt Value)
+        {
+            List.Clear();
+            for (int i = 0; i < Value.List.Count; i++)
+                List.Add(Value.List[i]);
+        }
+        public void Concat(ListInt Value)
+        {
+            for (int i = 0; i < Value.List.Count; i++)
+                AddValue(Value.List[i]);
+        }
+        public override string ToString()
+        {
+            string temp = new String(' ', 0);
+            for (int i = 0; i < List.Count - 1; i++)
+                temp += List[i] + ", ";
+            return temp + List[List.Count - 1];
+        }
+    }
 
     /// DEFINIÇÃO DAS CLASSES QUE TERÃO TODOS OS DADOS (GUARDADO EM DISCO)
     ///   * ESSA SERÁ A BASE DE DADOS DE TUDO QUE O PROGRAMA TERÁ  
@@ -106,24 +181,24 @@ namespace VisualSort
     ///   
 
     // Um tipo super-básico de ponteiro para um Nodo - contém somente o índice na lista-mestre respectiva
-    public struct TBEl
+    public struct TPNodo
     {
         public Int64 Índice;            // Índice na correspondente lista
         public int Tipo;                // Tipo (0= pessoa; 1= Periódico; 2= Conferência; 3= Produção; 4= Instituição)
         
         // Constructor
-        public TBEl(int Índice, int Tipo)
+        public TPNodo(Int64 Índice, int Tipo)
         {
             this.Índice = Índice;
             this.Tipo = Tipo;
         }
         // Override de Operadores
-        public static bool operator ==(TBEl E1, TBEl E2)
+        public static bool operator ==(TPNodo E1, TPNodo E2)
         {
             if ((E1 == null) || (E2 == null)) return false;
             return ((E1.Tipo == E2.Tipo) && (E1.Índice == E2.Índice));
         }
-        public static bool operator !=(TBEl E1, TBEl E2)
+        public static bool operator !=(TPNodo E1, TPNodo E2)
         {
             if ((E1 == null) || (E2 == null)) return true;
             return !((E1.Tipo == E2.Tipo) && (E1.Índice == E2.Índice));
@@ -137,19 +212,18 @@ namespace VisualSort
             return (int) (Índice ^ Tipo);
         }
     }
-
     // Uma ligação - liga dois Ponteiros de Nodos
     public class TLigação
     {
-        public TBEl[] Elementos;        // Elementos ligados (geralmente 2)                
+        public TPNodo[] Elementos;      // Elementos ligados (geralmente 2)                
         public int Peso;                // Caracteriza o Peso da ligação (Pessoa->Produção pode valer mais que Pessoa->Conferência)
         public bool Exist;              // Booleano que diz se existe - desconsiderar ligação se false
         // Constructor
-        public TLigação(int Peso, params TBEl[] Elementos)
+        public TLigação(int Peso, params TPNodo[] Elementos)
         {
-            this.Elementos = new TBEl[Elementos.Length];
+            this.Elementos = new TPNodo[Elementos.Length];
             int i = 0;
-            foreach (TBEl E in Elementos)
+            foreach (TPNodo E in Elementos)
             {
                 this.Elementos[i] = E;
                 i++;
@@ -158,7 +232,7 @@ namespace VisualSort
             this.Exist = true;
         }
         // Retorna true se o elemento está sendo linkado nessa ligação
-        public bool Contains(TBEl Elemento)
+        public bool Contains(TPNodo Elemento)
         {
             int i = 0;
             while (i < this.Elementos.Length)
@@ -170,71 +244,21 @@ namespace VisualSort
             return false;
         }
     }
-    // Manage uma lista de Ligações
-    public class TLigaçãoList
-    {
-        public List<TLigação> Ligas;        // A lista de Ligações
 
-        // Constructor
-        public TLigaçãoList()
-        {
-            Ligas = new List<TLigação>();
-        }
-        // Nova ligação
-        public int NovaLigação(int Peso, params TBEl[] Elementos)
-        {
-            // Procura uma ligação com esses elementos e esse peso
-            int Índice = ProcuraLigação(Peso, Elementos);
-            if (Índice > -1)
-                return Índice;
-            // Se não havia, cria
-            Ligas.Add(null);
-            Ligas[Ligas.Count - 1] = new TLigação(Peso, Elementos);
-            return Ligas.Count - 1;
-        }
-        // Deleta uma ligação
-        public void DeletaLigação(int i)
-        {
-            // A ligação ainda existe, porém, ela não será mais usada
-            Ligas[i].Exist = false;
-            Ligas[i].Elementos = null;
-            Ligas[i].Peso = 0;
-        }
-        // Retorna a 1ª ligação que possui todos os elementos de entrada (e Peso igual, se não for -1) - caso não ache, retorna -1
-        public int ProcuraLigação(int Peso, params TBEl[] Elementos)
-        {
-            int i = 0;
-            while (i < Ligas.Count)
-            {
-                bool Contem = true;
-                foreach (TBEl E in Elementos)
-                {
-                    if (!Ligas[i].Contains(E))
-                        Contem = false;
-                }
-                if ((Elementos.Length == Ligas[i].Elementos.Length) && (Contem == true) && 
-                    ((Ligas[i].Peso == Peso) || (Peso == -1)))
-                    return i;
-                i++;
-            }
-            return -1;
-        }
-    }
-
-    // Manage uma lista de índices de ligações
+    // Manage uma lista de índices de ligações - cada nodo terá uma dessas
     public class TLigaçãoPList
     {
         private List<Int64> Ligas;          // Lista de 'ponteiros'
-        public TBEl Parent;                 // A informação sobre quem é o pai
+        public TPNodo Parent;                 // A informação sobre quem é o pai
 
         // Constructor
-        public TLigaçãoPList(TBEl Parent)
+        public TLigaçãoPList(TPNodo Parent)
         {
             Ligas = new List<Int64>();
             this.Parent = Parent;
         }
         // Adiciona uma nova ligação
-        public int NovaLigação(TBEl Elemento, int Peso)
+        public int NovaLigação(TPNodo Elemento, int Peso)
         {
             // Procura nesse set de ligações
             int Índice = ProcuraLigação(Peso, Elemento, Parent);
@@ -256,13 +280,13 @@ namespace VisualSort
             return Ligas.Count - 1;
         }
         // Procura uma ligação dentro dessas ligações
-        public int ProcuraLigação(int Peso, params TBEl[] Elementos)
+        public int ProcuraLigação(int Peso, params TPNodo[] Elementos)
         {
             int i = 0;
             while (i < Ligas.Count)
             {
                 bool Contem = true;
-                foreach (TBEl E in Elementos)
+                foreach (TPNodo E in Elementos)
                 {
                     if (!Program.Ligações.Ligas[(int)Ligas[i]].Contains(E))
                         Contem = false;
@@ -281,9 +305,10 @@ namespace VisualSort
         public string Nome;             // Somente possui palavras suficentemente interessantes para pesquisa rápida
         public string Iniciais;         // Para ainda mais rápida pesquisa
         public BPos Data;               // Posição no disco (bloco e offset) de todos os dados
+        public Int64 Índice;            // Índice de si mesmo na lista respectiva
 
         // Constructors
-        public TBaseNodo(string Nome, BPos Data) 
+        public TBaseNodo(string Nome, Int64 Índice, BPos Data) 
         {
             this.Nome = new string(' ', 0);
             this.Iniciais = new string(' ', 0);
@@ -294,8 +319,9 @@ namespace VisualSort
                 this.Iniciais = String.Concat(this.Iniciais, substr.Substring(0, 1));
             }
             this.Data = Data;
+            this.Índice = Índice;
         }
-        protected TBaseNodo(string Nome, BPos Data, bool AddAllWords = false)
+        protected TBaseNodo(string Nome, BPos Data, Int64 Índice, bool AddAllWords = false)
         {
             this.Nome = new string(' ', 0);
             this.Iniciais = new string(' ', 0);
@@ -306,6 +332,7 @@ namespace VisualSort
                 this.Iniciais = String.Concat(this.Iniciais, substr.Substring(0, 1));
             }
             this.Data = Data;
+            this.Índice = Índice;
         }
         public TBaseNodo()
         {
@@ -325,14 +352,14 @@ namespace VisualSort
         public TLigaçãoPList Per;     // Lista dos Periódicos (Índice da Ligação)
 
         // Constructor (Data= onde está o resto dos dados; Índice= Índice de si na lista-mestre)
-        public TPessoa(string Nome, BPos Data, int Índice) :base(Nome, Data, true)
+        public TPessoa(string Nome, BPos Data, Int64 Índice) :base(Nome, Data, Índice, true)
         {
             // Cria todas as listas, passando a posição de si como parâmetro
-            this.Pessoas = new TLigaçãoPList(new TBEl(Índice, 0));
-            this.Inst = new TLigaçãoPList(new TBEl(Índice, 0));
-            this.Prod = new TLigaçãoPList(new TBEl(Índice, 0));
-            this.Conf = new TLigaçãoPList(new TBEl(Índice, 0));
-            this.Per = new TLigaçãoPList(new TBEl(Índice, 0));
+            this.Pessoas = new TLigaçãoPList(new TPNodo(Índice, 0));
+            this.Inst = new TLigaçãoPList(new TPNodo(Índice, 0));
+            this.Prod = new TLigaçãoPList(new TPNodo(Índice, 0));
+            this.Conf = new TLigaçãoPList(new TPNodo(Índice, 0));
+            this.Per = new TLigaçãoPList(new TPNodo(Índice, 0));
         }
     }
     // Um Periódico
@@ -363,13 +390,95 @@ namespace VisualSort
         
     }
 
+    /// Gerentes das Listas-Mestres (essas classes serão instanciadas)
+    // Lista de Ligações
+    public class TLigaçãoList
+    {
+        public List<TLigação> Ligas;    // A lista de Ligações
+
+        // Constructor
+        public TLigaçãoList()
+        {
+            this.Ligas = new List<TLigação>();
+        }
+        // Nova ligação
+        public int NovaLigação(int Peso, params TPNodo[] Elementos)
+        {
+            // Procura uma ligação com esses elementos e esse peso
+            int Índice = ProcuraLigação(Peso, Elementos);
+            if (Índice > -1)
+                return Índice;
+            // Se não havia, cria
+            Ligas.Add(null);
+            Ligas[Ligas.Count - 1] = new TLigação(Peso, Elementos);
+            return Ligas.Count - 1;
+        }
+        // Deleta uma ligação
+        public void DeletaLigação(int i)
+        {
+            if (i < Ligas.Count)
+            {
+                // A ligação ainda existe, porém, ela não será mais usada
+                Ligas[i].Exist = false;
+                Ligas[i].Elementos = null;
+                Ligas[i].Peso = 0;
+            }
+        }
+        // Retorna a 1ª ligação que possui todos os elementos de entrada (e Peso igual, se não for -1) - caso não ache, retorna -1
+        public int ProcuraLigação(int Peso, params TPNodo[] Elementos)
+        {
+            int i = 0;
+            while (i < Ligas.Count)
+            {
+                bool Contem = true;
+                foreach (TPNodo E in Elementos)
+                {
+                    if (!Ligas[i].Contains(E))
+                        Contem = false;
+                }
+                if ((Elementos.Length == Ligas[i].Elementos.Length) && (Contem == true) &&
+                    ((Ligas[i].Peso == Peso) || (Peso == -1)))
+                    return i;
+                i++;
+            }
+            return -1;
+        }
+    }
+    // Lista de Pessoas
+    public class TPessoasList
+    {
+        public List<TPessoa> Pessoas;   // A lista de Pessoas
+
+        // Constrcutor
+        public TPessoasList()
+        {
+            this.Pessoas = new List<TPessoa>();
+        }
+        // Nova Pessoa
+        public int NovaPessoa(string Nome, BPos Data)
+        {
+            // Procura uma pessoa com esse nome
+            int Índice = ProcuraPessoa(Nome);
+            if (Índice > -1)
+                return Índice;
+            // Se não havia, cria
+            Pessoas.Add(null);
+            Pessoas[Pessoas.Count - 1] = new TPessoa(Nome, Data, Pessoas.Count - 1);
+            return Pessoas.Count - 1;
+        }
+        // Procura uma Pessoa por palavras-chave
+        public int ProcuraPessoa(string Nome)
+        {
+            return 0;
+        }
+    }
 
     //testa essa:
     class TesteEstaCristiano
     {
         string Nome;
         BPos Banana;
-        TBEl Cebola;
+        TPNodo Cebola;
         Int64 Bliblu;
         List<TLigação> Listona;
         public TesteEstaCristiano()
@@ -377,7 +486,7 @@ namespace VisualSort
             // coloca algumas coisas pra testar - tenha certeza que é igual
             this.Nome = new String(' ' , 0);
             this.Banana = new BPos(2, 3);
-            this.Cebola = new TBEl(3, 2);
+            this.Cebola = new TPNodo(3, 2);
             this.Bliblu = 33;
             this.Listona = new List<TLigação>();
             this.Listona.Add(null);
@@ -396,8 +505,7 @@ namespace VisualSort
     NÃO TA COMENTADO PRA TU VER CASO TU TENTE COMPILAR
     /*ISSO TA BEM INCOMPLETO E FALTA BASTANTE
      * NÃO FAÇA NADA COM ESSE CÓDIGO, TENTA ENTENDER O QUE TA ACONTECENDO, MAS FALTA BASTANTE
-     * O QUE EU VOU FAZER AMANHÃ (SÁBADO:)
-     * 1. REVERIFICAR ESSE ESQUEMA DE LINKS E LIGAÇÕES
+     * O QUE EU ESTOU FAZENDO: 
      * 2. ADICIONAR CLASSES ESPECIAIS QUE VÃO FICAR RESPONSÁVEIS POR CADA UMA DAS LISTAS-MESTRE DE CADA TIPO
      * 3. CADA CLASSE ESPECIAL VAI TER FUNÇÕES DE ADICIONAR NOVOS ELEMENTOS E PROCURAR
      * 4. CADA FUNÇÃO DE ADICIONAR VAI TER CERTEZA QUE ELE NÃO EXISTE AINDA UTILIZANDO FUNÇÕES DE COMPARAÇÕES DE STRING DE VÁRIOS TIPOS (INICIAIS, SOBRENOME, ETC)
