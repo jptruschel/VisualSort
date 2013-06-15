@@ -19,7 +19,7 @@ namespace VisualSort
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
-        private Texture2D LoadingTexture1, LoadingTexture2, LoadingTexture3;
+        private Texture2D[] LoadingTexture;
         private Vector2 LoadingOrigin, LoadingPos;
         private float LoadingAngle, LoadingScale, LoadingAlpha;
         private bool isLoading;
@@ -30,6 +30,7 @@ namespace VisualSort
             // Deixemos assim até que coloquemos full screen com toda a parte de resolução certinho
             graphics.PreferredBackBufferHeight = 720;
             graphics.PreferredBackBufferWidth = 1280;
+            graphics.PreferMultiSampling = true;
             Content.RootDirectory = "Content";
         }
 
@@ -46,6 +47,7 @@ namespace VisualSort
 
             base.Initialize();
             isLoading = false;
+            //Program.Ligações.Add(new TLigação());
         }
 
         /// <summary>
@@ -54,9 +56,11 @@ namespace VisualSort
         /// </summary>
         protected override void LoadContent()
         {
-            TElemento teste = new TElemento("Um a dois bla we adsdwd");
-            Console.WriteLine(teste.Nome);
-            Console.WriteLine(teste.Sigla);
+            TPessoa teste = new TPessoa("Leandro Krug Wives", new BPos(0,0));
+            TPessoa teste2 = new TPessoa("Ana Maria", new BPos(0, 0));
+            //Console.WriteLine(teste.AddLinkPessoa(1).ToString());
+            //Console.WriteLine(teste.AddLinkPessoa(2).ToString());
+            //Console.WriteLine(teste.AddLinkPessoa(1).ToString());
 
             isLoading = true;
 
@@ -64,16 +68,18 @@ namespace VisualSort
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // Initializes the Loading Circle
-            LoadingTexture1 = Content.Load<Texture2D>("Loading1");
-            LoadingTexture2 = Content.Load<Texture2D>("Loading2");
-            LoadingTexture3 = Content.Load<Texture2D>("Loading3");
+            LoadingTexture = new Texture2D[4];
+            LoadingTexture[0] = Content.Load<Texture2D>("Loading1");
+            LoadingTexture[1] = Content.Load<Texture2D>("Loading2");
+            LoadingTexture[2] = Content.Load<Texture2D>("Loading3");
+            LoadingTexture[3] = Content.Load<Texture2D>("Loading4");
             Viewport viewport = graphics.GraphicsDevice.Viewport;
-            LoadingOrigin.X = LoadingTexture1.Width / 2;
-            LoadingOrigin.Y = LoadingTexture1.Height / 2;
-            LoadingScale = 0.42f;
-            LoadingAlpha = 0.9f;
-            LoadingPos.X = viewport.Width - (LoadingScale * LoadingTexture1.Width * 0.64f);
-            LoadingPos.Y = LoadingScale * LoadingTexture1.Height * 0.64f;
+            LoadingOrigin.X = LoadingTexture[0].Width / 2;
+            LoadingOrigin.Y = LoadingTexture[1].Height / 2;
+            LoadingScale = 0.64f;
+            LoadingAlpha = 0.8f;
+            LoadingPos.X = viewport.Width / 2f;// - (LoadingScale * LoadingTexture1.Width * 0.64f);
+            LoadingPos.Y = viewport.Height * 0.4f;//LoadingScale * LoadingTexture1.Height * 0.64f;
 
             isLoading = false;
         }
@@ -99,7 +105,7 @@ namespace VisualSort
                 this.Exit();
 
             // Makes the Loading Circle Rotate
-            LoadingAngle += (float)gameTime.ElapsedGameTime.TotalSeconds * 2.5f;
+            LoadingAngle += (float)gameTime.ElapsedGameTime.TotalSeconds * 2.56f;
             LoadingAngle = LoadingAngle % (MathHelper.Pi * 4);
 
             base.Update(gameTime);
@@ -111,17 +117,19 @@ namespace VisualSort
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.DarkCyan);
+            GraphicsDevice.Clear(Color.DarkSlateBlue);
 
             // Draws the Loading Circle
             spriteBatch.Begin();
             if (!isLoading)
             {
-                spriteBatch.Draw(LoadingTexture3, LoadingPos, null, Color.White * LoadingAlpha * 0.8f, LoadingAngle * 0.5f,
+                spriteBatch.Draw(LoadingTexture[2], LoadingPos, null, Color.White * LoadingAlpha * 0.6f, LoadingAngle * 0.0f,
+                    LoadingOrigin, LoadingScale*0.96f, SpriteEffects.None, 0f);
+                spriteBatch.Draw(LoadingTexture[3], LoadingPos, null, Color.White * LoadingAlpha, -LoadingAngle * 0.5f,
+                    LoadingOrigin, LoadingScale * 0.96f, SpriteEffects.None, 0f);
+                spriteBatch.Draw(LoadingTexture[0], LoadingPos, null, Color.White * LoadingAlpha, -LoadingAngle,
                     LoadingOrigin, LoadingScale, SpriteEffects.None, 0f);
-                spriteBatch.Draw(LoadingTexture1, LoadingPos, null, Color.White * LoadingAlpha, -LoadingAngle,
-                    LoadingOrigin, LoadingScale, SpriteEffects.None, 0f);
-                spriteBatch.Draw(LoadingTexture2, LoadingPos, null, Color.White * LoadingAlpha, LoadingAngle,
+                spriteBatch.Draw(LoadingTexture[1], LoadingPos, null, Color.White * LoadingAlpha, LoadingAngle,
                     LoadingOrigin, LoadingScale, SpriteEffects.None, 0f);
             }
             spriteBatch.End();

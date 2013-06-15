@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace VisualSort
 {
@@ -8,6 +11,15 @@ namespace VisualSort
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
+       
+        /* LISTAS DE TODOS OS DADOS UTILIZADOS */
+        public static TLigaçãoList Ligações = new TLigaçãoList();
+        public static List<TPessoa> Pessoas = new List<TPessoa>();
+        public static List<TPeriódico> Peridódicos = new List<TPeriódico>();
+        public static List<TConferência> Conferências = new List<TConferência>();
+        public static List<TProdBibliográfica> Produções = new List<TProdBibliográfica>();
+        public static List<TInstituição> Instituições = new List<TInstituição>();
+
         static void Main(string[] args)
         {
             using (MainForm game = new MainForm())

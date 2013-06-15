@@ -5,7 +5,8 @@ using System.Text;
 
 namespace VisualSort
 {
-    class Cancan
+    public class Cancan
     {
+
     }
 }
