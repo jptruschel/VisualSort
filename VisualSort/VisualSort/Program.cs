@@ -12,7 +12,7 @@ namespace VisualSort
         /// The main entry point for the application.
         /// </summary>
        
-        /* LISTAS DE TODOS OS DADOS UTILIZADOS */
+        /* LISTAS DE TODOS OS DADOS UTILIZADOS (listas-mestre) */
         public static TLigaçãoList Ligações = new TLigaçãoList();
         public static List<TPessoa> Pessoas = new List<TPessoa>();
         public static List<TPeriódico> Peridódicos = new List<TPeriódico>();

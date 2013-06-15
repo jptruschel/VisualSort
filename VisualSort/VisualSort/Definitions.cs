@@ -81,7 +81,23 @@ namespace VisualSort
         List<string> CNomes;    // Nomes Curto Gerados a partir do nome completo (eg: "Leandro Krug Wives"; "Wives LK"; "Wives, LK"; "LK Wives")
         string País;            // País de nascimento
         string TextoResumo;     // Resumo da pessoa
-        List<int> ProduçõesBib; // Índices de todas as Produções
+        List<int> ProduçõesBib; // Índices de todas as Produções (na lista-mestre)
+    }
+
+    // Blocos
+    public class TBlocoPessoas
+    {
+        TFPessoa[] Bloco;
+        int Count;
+        public TBlocoPessoas()
+        {
+            Bloco = new TFPessoa[512];
+            Count = 0;
+        }
+        public void AdicionaPessoa()
+        {
+
+        }
     }
 
     /// DEFINIÇÃO DAS CLASSES QUE TERÃO INFORMAÇÕES CRUCIAIS SOMENTE */
@@ -89,7 +105,7 @@ namespace VisualSort
     ///   * ESSES DADOS SERÃO DEIXADOS NA MEMÓRIA E NUNCA SAIRÃO DE LÁ */
     ///   
 
-    // Um tipo super-básico de Elemento - contém somente o índice na lista respectiva
+    // Um tipo super-básico de ponteiro para um Nodo - contém somente o índice na lista-mestre respectiva
     public struct TBEl
     {
         public Int64 Índice;            // Índice na correspondente lista
@@ -122,7 +138,7 @@ namespace VisualSort
         }
     }
 
-    // Uma ligação - liga dois ElementosBásicos (por índices das listas-mestre existentes)
+    // Uma ligação - liga dois Ponteiros de Nodos
     public class TLigação
     {
         public TBEl[] Elementos;        // Elementos ligados (geralmente 2)                
@@ -267,7 +283,7 @@ namespace VisualSort
         public BPos Data;               // Posição no disco (bloco e offset) de todos os dados
 
         // Constructors
-        public TBaseNodo(string Nome) 
+        public TBaseNodo(string Nome, BPos Data) 
         {
             this.Nome = new string(' ', 0);
             this.Iniciais = new string(' ', 0);
@@ -277,8 +293,9 @@ namespace VisualSort
                     this.Nome = String.Concat(this.Nome, substr, " ");
                 this.Iniciais = String.Concat(this.Iniciais, substr.Substring(0, 1));
             }
+            this.Data = Data;
         }
-        protected TBaseNodo(string Nome, bool AddAllWords = false)
+        protected TBaseNodo(string Nome, BPos Data, bool AddAllWords = false)
         {
             this.Nome = new string(' ', 0);
             this.Iniciais = new string(' ', 0);
@@ -288,31 +305,34 @@ namespace VisualSort
                     this.Nome = String.Concat(this.Nome, substr, " ");
                 this.Iniciais = String.Concat(this.Iniciais, substr.Substring(0, 1));
             }
+            this.Data = Data;
         }
         public TBaseNodo()
         {
             this.Nome = new string(' ', 0);
             this.Iniciais = new string(' ', 0);
+            this.Data.Bloco = -1;
+            this.Data.Offset = -1;
         }
     }
     // Uma Pessoa
     public class TPessoa: TBaseNodo
     {
-        public List<List<int>> Pessoas; // As pessoas que estão conectadas a essa (1ª dimensão: Ordem de atrelamento; 2ª dimensão: Índice da Ligação)
-        public List<List<int>> Inst;    // Lista das Instituições (mesma lógica das Pessoas)
-        public List<List<int>> Prod;    // Lista das Produções Bibliográficas (mesma lógica das Pessoas)
-        public List<List<int>> Conf;    // Lista das Conferências (mesma lógica das Pessoas)
-        public List<List<int>> Per;     // Lista dos Periódicos (mesma lógica das Pessoas)
+        public TLigaçãoPList Pessoas; // Lista das Pessoas (Índice da Ligação)
+        public TLigaçãoPList Inst;    // Lista das Instituições (Índice da Ligação)
+        public TLigaçãoPList Prod;    // Lista das Produções Bibliográficas (Índice da Ligação)
+        public TLigaçãoPList Conf;    // Lista das Conferências (Índice da Ligação)
+        public TLigaçãoPList Per;     // Lista dos Periódicos (Índice da Ligação)
 
-        // Constructor
-        public TPessoa(string Nome, BPos Data) :base(Nome, true)
+        // Constructor (Data= onde está o resto dos dados; Índice= Índice de si na lista-mestre)
+        public TPessoa(string Nome, BPos Data, int Índice) :base(Nome, Data, true)
         {
-            this.Pessoas = new List<List<int>>();
-            this.Inst = new List<List<int>>();
-            this.Prod = new List<List<int>>();
-            this.Conf = new List<List<int>>();
-            this.Per = new List<List<int>>();
-            this.Data = Data;
+            // Cria todas as listas, passando a posição de si como parâmetro
+            this.Pessoas = new TLigaçãoPList(new TBEl(Índice, 0));
+            this.Inst = new TLigaçãoPList(new TBEl(Índice, 0));
+            this.Prod = new TLigaçãoPList(new TBEl(Índice, 0));
+            this.Conf = new TLigaçãoPList(new TBEl(Índice, 0));
+            this.Per = new TLigaçãoPList(new TBEl(Índice, 0));
         }
     }
     // Um Periódico
@@ -343,6 +363,51 @@ namespace VisualSort
         
     }
 
+
+    //testa essa:
+    class TesteEstaCristiano
+    {
+        string Nome;
+        BPos Banana;
+        TBEl Cebola;
+        Int64 Bliblu;
+        List<TLigação> Listona;
+        public TesteEstaCristiano()
+        {    
+            // coloca algumas coisas pra testar - tenha certeza que é igual
+            this.Nome = new String(' ' , 0);
+            this.Banana = new BPos(2, 3);
+            this.Cebola = new TBEl(3, 2);
+            this.Bliblu = 33;
+            this.Listona = new List<TLigação>();
+            this.Listona.Add(null);
+            this.Listona[0] = new TLigação(20, Cebola);
+        }
+        public override string ToString()
+        {
+            // Fiz até um ToString() pra ti pra tu poder testar
+            return Nome + ", " + Banana.Bloco + ", " + Banana.Offset + ", " + Cebola.Índice + ", " + Cebola.Tipo + ", " + Bliblu + ", " + Listona.Count + ", " + Listona[0].Peso + ", " + Listona[0].Elementos[0].Índice + ", " + Listona[0].Elementos[0].Tipo;
+        }
+    }
+    // TesteEstaCristiano bla = new TesteEstaCristiano();
+    // Console.WriteLine(bla.ToString());
+
+    CRISTIANO LEIA ISSO:
+    NÃO TA COMENTADO PRA TU VER CASO TU TENTE COMPILAR
+    /*ISSO TA BEM INCOMPLETO E FALTA BASTANTE
+     * NÃO FAÇA NADA COM ESSE CÓDIGO, TENTA ENTENDER O QUE TA ACONTECENDO, MAS FALTA BASTANTE
+     * O QUE EU VOU FAZER AMANHÃ (SÁBADO:)
+     * 1. REVERIFICAR ESSE ESQUEMA DE LINKS E LIGAÇÕES
+     * 2. ADICIONAR CLASSES ESPECIAIS QUE VÃO FICAR RESPONSÁVEIS POR CADA UMA DAS LISTAS-MESTRE DE CADA TIPO
+     * 3. CADA CLASSE ESPECIAL VAI TER FUNÇÕES DE ADICIONAR NOVOS ELEMENTOS E PROCURAR
+     * 4. CADA FUNÇÃO DE ADICIONAR VAI TER CERTEZA QUE ELE NÃO EXISTE AINDA UTILIZANDO FUNÇÕES DE COMPARAÇÕES DE STRING DE VÁRIOS TIPOS (INICIAIS, SOBRENOME, ETC)
+     * 5. AS FUNÇÕES DE PROCURAR TAMBÉM VÃO USAR ESSAS FUNÇÕES DE COMPARAÇÃO DE STRINGS
+     * 6. ADICIONAR FUNÇÕES PARA TRABALHAR COM TODO O VOLUME DE DADOS, SALVANDO NO DISCO RÍGIDO E RECUPERANDO DEPOIS
+     * EU ACHO MELHOR TU DAR UMA OLHADA E ANOTAR O QUE TU QUER MUDAR, MAS DEIXAR TUDO COMO ESTÁ; CONVERSAMOS AMANHÃ
+     * SE TU QUISER IR FAZENDO ALGO, FAZ FUNÇÕES QUE SALVE UMA INSTÂNCIA DE "TesteEstaCristiano" PARA UM BINÁRIO E CARREGUE DE VOLTA
+         tem que ser essa classe inútil porque ainda tem muito a arrumar pra ter a função pronta, mas ali tem tudo que vamos precisar
+     *  BTW, SE TU QUISER COMPILAR PRA VER SE TA TUDO BEM, A COISINHA QUE GIRA É TIPO UM LOADING QUE A GENTE BOTA NUMA THREAD ENQUANTO CARREGA AS COISAS
+     */
     class Definitions
     {
 

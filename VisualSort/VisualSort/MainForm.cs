@@ -19,10 +19,13 @@ namespace VisualSort
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
+        // Loading Circle stuff
         private Texture2D[] LoadingTexture;
         private Vector2 LoadingOrigin, LoadingPos;
         private float LoadingAngle, LoadingScale, LoadingAlpha;
         private bool isLoading;
+        // Default Font
+        SpriteFont DefaultFont;
 
         public MainForm()
         {
@@ -31,6 +34,7 @@ namespace VisualSort
             graphics.PreferredBackBufferHeight = 720;
             graphics.PreferredBackBufferWidth = 1280;
             graphics.PreferMultiSampling = true;
+            graphics.ApplyChanges();
             Content.RootDirectory = "Content";
         }
 
@@ -56,12 +60,6 @@ namespace VisualSort
         /// </summary>
         protected override void LoadContent()
         {
-            TPessoa teste = new TPessoa("Leandro Krug Wives", new BPos(0,0));
-            TPessoa teste2 = new TPessoa("Ana Maria", new BPos(0, 0));
-            //Console.WriteLine(teste.AddLinkPessoa(1).ToString());
-            //Console.WriteLine(teste.AddLinkPessoa(2).ToString());
-            //Console.WriteLine(teste.AddLinkPessoa(1).ToString());
-
             isLoading = true;
 
             // Create a new SpriteBatch, which can be used to draw textures.
@@ -80,6 +78,9 @@ namespace VisualSort
             LoadingAlpha = 0.8f;
             LoadingPos.X = viewport.Width / 2f;// - (LoadingScale * LoadingTexture1.Width * 0.64f);
             LoadingPos.Y = viewport.Height * 0.4f;//LoadingScale * LoadingTexture1.Height * 0.64f;
+
+            // Font
+            DefaultFont = Content.Load<SpriteFont>("DefaultFont");
 
             isLoading = false;
         }
@@ -131,6 +132,7 @@ namespace VisualSort
                     LoadingOrigin, LoadingScale, SpriteEffects.None, 0f);
                 spriteBatch.Draw(LoadingTexture[1], LoadingPos, null, Color.White * LoadingAlpha, LoadingAngle,
                     LoadingOrigin, LoadingScale, SpriteEffects.None, 0f);
+                spriteBatch.DrawString(DefaultFont, "Loading", LoadingPos + new Vector2(-(DefaultFont.MeasureString("Loading")).X*0.5f, LoadingTexture[0].Width * 0.56f * LoadingScale), Color.White);
             }
             spriteBatch.End();
 
