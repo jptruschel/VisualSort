@@ -12,13 +12,20 @@ namespace VisualSort
         /// The main entry point for the application.
         /// </summary>
        
+        /* BLOCOS DE DADOS SALVOS NO DISCO */
+        public static TBlocoPessoas fPessoas = new TBlocoPessoas();
+        public static TBlocoPeriódicos fPeriódicos = new TBlocoPeriódicos();
+        public static TBlocoConferências fConferências = new TBlocoConferências();
+        public static TBlocoInstituições fInstituições = new TBlocoInstituições();
+        public static TBlocoProduções fProduções = new TBlocoProduções();
         /* LISTAS DE TODOS OS DADOS UTILIZADOS (listas-mestre) */
-        public static TLigaçãoList Ligações = new TLigaçãoList();
-        public static List<TPessoa> Pessoas = new List<TPessoa>();
-        public static List<TPeriódico> Peridódicos = new List<TPeriódico>();
-        public static List<TConferência> Conferências = new List<TConferência>();
-        public static List<TProdBibliográfica> Produções = new List<TProdBibliográfica>();
-        public static List<TInstituição> Instituições = new List<TInstituição>();
+        public static TLigaçãoList mLigações = new TLigaçãoList();
+        public static TPessoasList mPessoas = new TPessoasList();
+        public static TPeriódicosList mPeridódicos = new TPeriódicosList();
+        public static TConferênciaList mConferências = new TConferênciaList();
+        public static TProduçõesList mProduções = new TProduçõesList();
+        public static TInstituiçãoList mInstituições = new TInstituiçãoList();
+
 
         static void Main(string[] args)
         {

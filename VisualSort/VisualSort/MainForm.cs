@@ -33,7 +33,7 @@ namespace VisualSort
             // Deixemos assim até que coloquemos full screen com toda a parte de resolução certinho
             graphics.PreferredBackBufferHeight = 720;
             graphics.PreferredBackBufferWidth = 1280;
-            graphics.PreferMultiSampling = true;
+            //graphics.PreferMultiSampling = true;
             graphics.ApplyChanges();
             Content.RootDirectory = "Content";
         }
@@ -118,7 +118,7 @@ namespace VisualSort
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.DarkSlateBlue);
+            GraphicsDevice.Clear(Color.DarkSlateGray);
 
             // Draws the Loading Circle
             spriteBatch.Begin();
