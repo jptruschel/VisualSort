@@ -14,20 +14,21 @@ namespace VisualSort
     /// <summary>
     /// This is the main type for your game
     /// </summary>
-    public class MainForm : Microsoft.Xna.Framework.Game
+    public class Renderer : Microsoft.Xna.Framework.Game
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
         // Loading Circle stuff
-        private Texture2D[] LoadingTexture;
         private Vector2 LoadingOrigin, LoadingPos;
         private float LoadingAngle, LoadingScale, LoadingAlpha;
         private bool isLoading;
         // Default Font
         SpriteFont DefaultFont;
 
-        public MainForm()
+        Graph.TDrawNodo teste = new Graph.TDrawNodo();
+
+        public Renderer()
         {
             graphics = new GraphicsDeviceManager(this);
             // Deixemos assim até que coloquemos full screen com toda a parte de resolução certinho
@@ -51,7 +52,6 @@ namespace VisualSort
 
             base.Initialize();
             isLoading = false;
-            //Program.Ligações.Add(new TLigação());
         }
 
         /// <summary>
@@ -65,15 +65,17 @@ namespace VisualSort
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
+            // Load the Sprites
+            Program.NodoTex = Content.Load<Texture2D>("Nodo64");
             // Initializes the Loading Circle
-            LoadingTexture = new Texture2D[4];
-            LoadingTexture[0] = Content.Load<Texture2D>("Loading1");
-            LoadingTexture[1] = Content.Load<Texture2D>("Loading2");
-            LoadingTexture[2] = Content.Load<Texture2D>("Loading3");
-            LoadingTexture[3] = Content.Load<Texture2D>("Loading4");
+            Program.LoadingTexture = new Texture2D[4];
+            Program.LoadingTexture[0] = Content.Load<Texture2D>("Loading1");
+            Program.LoadingTexture[1] = Content.Load<Texture2D>("Loading2");
+            Program.LoadingTexture[2] = Content.Load<Texture2D>("Loading3");
+            Program.LoadingTexture[3] = Content.Load<Texture2D>("Loading4");
             Viewport viewport = graphics.GraphicsDevice.Viewport;
-            LoadingOrigin.X = LoadingTexture[0].Width / 2;
-            LoadingOrigin.Y = LoadingTexture[1].Height / 2;
+            LoadingOrigin.X = Program.LoadingTexture[0].Width / 2;
+            LoadingOrigin.Y = Program.LoadingTexture[1].Height / 2;
             LoadingScale = 0.64f;
             LoadingAlpha = 0.8f;
             LoadingPos.X = viewport.Width / 2f;// - (LoadingScale * LoadingTexture1.Width * 0.64f);
@@ -118,22 +120,28 @@ namespace VisualSort
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.DarkSlateGray);
+            GraphicsDevice.Clear(new Color(10, 35, 114));//Color.DarkSlateGray);
+
 
             // Draws the Loading Circle
             spriteBatch.Begin();
             if (!isLoading)
             {
-                spriteBatch.Draw(LoadingTexture[2], LoadingPos, null, Color.White * LoadingAlpha * 0.6f, LoadingAngle * 0.0f,
+                teste.Pos = new Vector2(32, 32);
+                teste.Update(gameTime);
+                teste.Draw(spriteBatch);
+                spriteBatch.Draw(Program.LoadingTexture[2], LoadingPos, null, Color.White * LoadingAlpha * 0.6f, 0.0f,
                     LoadingOrigin, LoadingScale*0.96f, SpriteEffects.None, 0f);
-                spriteBatch.Draw(LoadingTexture[3], LoadingPos, null, Color.White * LoadingAlpha, -LoadingAngle * 0.5f,
+                spriteBatch.Draw(Program.LoadingTexture[3], LoadingPos, null, Color.White * LoadingAlpha, -LoadingAngle * 0.5f,
                     LoadingOrigin, LoadingScale * 0.96f, SpriteEffects.None, 0f);
-                spriteBatch.Draw(LoadingTexture[0], LoadingPos, null, Color.White * LoadingAlpha, -LoadingAngle,
+                spriteBatch.Draw(Program.LoadingTexture[0], LoadingPos, null, Color.White * LoadingAlpha, -LoadingAngle,
                     LoadingOrigin, LoadingScale, SpriteEffects.None, 0f);
-                spriteBatch.Draw(LoadingTexture[1], LoadingPos, null, Color.White * LoadingAlpha, LoadingAngle,
+                spriteBatch.Draw(Program.LoadingTexture[1], LoadingPos, null, Color.White * LoadingAlpha, LoadingAngle,
                     LoadingOrigin, LoadingScale, SpriteEffects.None, 0f);
-                spriteBatch.DrawString(DefaultFont, "Loading", LoadingPos + new Vector2(-(DefaultFont.MeasureString("Loading")).X*0.5f, LoadingTexture[0].Width * 0.56f * LoadingScale), Color.White);
+                spriteBatch.DrawString(DefaultFont, "Loading", LoadingPos + new Vector2(-(DefaultFont.MeasureString("Loading")).X * 0.5f, Program.LoadingTexture[0].Width * 0.56f * LoadingScale), Color.White);
             }
+            // Draws the FPS
+            spriteBatch.DrawString(DefaultFont, "FPS: " + (int)(1 / (float)gameTime.ElapsedGameTime.TotalSeconds), new Vector2(0f, 0f), Color.White);
             spriteBatch.End();
 
             base.Draw(gameTime);

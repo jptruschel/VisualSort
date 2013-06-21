@@ -2,6 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.GamerServices;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 
 namespace VisualSort
 {
@@ -19,7 +26,6 @@ namespace VisualSort
         public static TBlocoInstituições fInstituições = new TBlocoInstituições();
         public static TBlocoProduções fProduções = new TBlocoProduções();
         /* LISTAS DE TODOS OS DADOS UTILIZADOS (listas-mestre) */
-        public static TLigaçãoList mLigações = new TLigaçãoList();
         public static TPessoasList mPessoas = new TPessoasList();
         public static TPeriódicosList mPeridódicos = new TPeriódicosList();
         public static TConferênciaList mConferências = new TConferênciaList();
@@ -27,9 +33,14 @@ namespace VisualSort
         public static TInstituiçãoList mInstituições = new TInstituiçãoList();
 
 
+        /* TEXTURAS USADAS GLOBALMENTE */
+        public static Texture2D NodoTex;
+        public static Texture2D[] LoadingTexture;
+
+
         static void Main(string[] args)
         {
-            using (MainForm game = new MainForm())
+            using (Renderer game = new Renderer())
             {
                 game.IsMouseVisible = true;
                 game.Window.Title = "VisualSort";
