@@ -65,7 +65,9 @@ namespace VisualSort
             if (Lines.Count > 0)
             {
                 VertexPositionColor[] aD = new VertexPositionColor[Lines.Count * 2];
-                for (int i = 0; i < Lines.Count; i++)
+                //for (int i = 0; i < Lines.Count; i++)
+                int i = 0;
+                while ((i < Lines.Count))
                 {
                     aD[i * 2] = 
                         new VertexPositionColor(
@@ -81,11 +83,13 @@ namespace VisualSort
                                     Lines[i].Point2.X,// + (Lines[i].Point2.X - Graph.Camera.X) * Graph.Camera.Z,
                                     Lines[i].Point2.Y),0),// + (Lines[i].Point2.Y - Graph.Camera.Y) * Graph.Camera.Z), 0),
                                     Lines[i].Color2);
+                    i++;
                 }
+                basicEffect.View = Graph.Camera._transform;
                 foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
                 {
                     pass.Apply();
-                    graphicsDevice.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.LineList, aD, 0, (int)(aD.Length * 0.5));
+                    graphicsDevice.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.LineList, aD, 0, (int)(Math.Min(aD.Length * 0.5, 1048570)));
                 }
             }
         }

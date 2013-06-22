@@ -15,8 +15,63 @@ namespace VisualSort
 {
     public static class Graph
     {
-        /* OPÇÕES DE CÂMERA */
-        //public static Vector3 Camera = new Vector3(0f, 0f, 1f);
+
+        public class Camera2d
+        {
+            protected float _zoom; // Camera Zoom
+            public Matrix _transform; // Matrix Transform
+            public Matrix inverse;
+            public Vector2 mousePos;
+            public Vector2 _pos; // Camera Position
+            protected float _rotation; // Camera Rotation
+
+            public Camera2d()
+            {
+                _zoom = 1.0f;
+                _rotation = 0.0f;
+                _pos = Vector2.Zero;
+            }
+            // Sets and gets zoom
+            public float Zoom
+            {
+                get { return _zoom; }
+                set { _zoom = value; if (_zoom < 0.1f) _zoom = 0.1f; } // Negative zoom will flip image
+            }
+
+            public float Rotation
+            {
+                get { return _rotation; }
+                set { _rotation = value; }
+            }
+
+            // Auxiliary function to move the camera
+            public void Move(Vector2 amount)
+            {
+                _pos += amount;
+            }
+            // Get set position
+            public Vector2 Pos
+            {
+                get { return _pos; }
+                set { _pos = value; }
+            }
+            public Matrix get_transformation(GraphicsDevice graphicsDevice)
+            {
+                _transform =       // Thanks to o KB o for this solution
+                  Matrix.CreateTranslation(new Vector3(-_pos.X, -_pos.Y, 0)) *
+                                             Matrix.CreateRotationZ(Rotation) *
+                                             Matrix.CreateScale(new Vector3(Zoom, Zoom, 1)) *
+                                             Matrix.CreateTranslation(new Vector3(graphicsDevice.Viewport.Width * 0.5f, graphicsDevice.Viewport.Height * 0.5f, 0));
+                return _transform;
+            }
+            public void UpdateMouse(GraphicsDevice graphicsDevice, MouseState mouseStateCurrent)
+            {
+                this.inverse = Matrix.Invert(get_transformation(graphicsDevice));
+                mousePos = Vector2.Transform(
+                   new Vector2(mouseStateCurrent.X, mouseStateCurrent.Y), inverse);
+            }
+        }
+        public static Camera2d Camera;
         public static float DefaultNodeSize = 32f;
         public static PrimitiveRenderer DPrimitives;
 
@@ -25,7 +80,7 @@ namespace VisualSort
         {
             public Vector2 Pos;
             public Color Color;
-            public bool Selected, Drawable;
+            public bool Selected, Drawable, MouseOver;
             public float RotAngle;
             public List<int> Lines;
 
@@ -53,8 +108,27 @@ namespace VisualSort
                     }
                 }
             }
+            public void MoveTo(Vector2 Pos)
+            {
+                this.Pos = Pos;
+            }
             public void Update(GameTime gameTime)
             {
+                // Verifica se está com o mouse em cima
+                if (!Rectangle.Intersect(
+                    new Rectangle(
+                        (int)(this.Pos.X - (DefaultNodeSize / 2)),
+                        (int)(this.Pos.Y - (DefaultNodeSize / 2)),
+                        (int)(DefaultNodeSize),
+                        (int)(DefaultNodeSize)),
+                     new Rectangle(
+                         (int)Graph.Camera.mousePos.X,
+                         (int)Graph.Camera.mousePos.Y,
+                         1, 1
+                         )).IsEmpty)
+                    MouseOver = true;
+                else
+                    MouseOver = false;
                 // Recalcula as linhas
                 for (int i = 0; i < Lines.Count; i++)
                 {
@@ -73,16 +147,17 @@ namespace VisualSort
             }
             public void Draw(SpriteBatch spriteBatch)
             {
+                if (MouseOver)
+                    this.Color = Color.Red;
+                else
+                    this.Color = Color.White;
                 // Desenha o nodo
-                float Size = DefaultNodeSize;
-                //if (!this.Selected)
-                //    Size = DefaultNodeSize * (1.0f+(Camera.Z * 0.8f));
                 spriteBatch.Draw(Program.NodoTex, 
                     new Rectangle(
                         (int)(this.Pos.X),
                         (int)(this.Pos.Y),
-                        (int)(Size),
-                        (int)(Size)),
+                        (int)(DefaultNodeSize),
+                        (int)(DefaultNodeSize)),
                     new Rectangle(0,0,64,64),
                     this.Color,
                     0f,
@@ -157,9 +232,9 @@ namespace VisualSort
                     float cosRadians = (float)Math.Cos(NodeAngleDisplace);
                     float sinRadians = (float)Math.Sin(NodeAngleDisplace);
                     NodoL.Drawable = true;
-                    NodoL.Pos = NodoS.Pos + new Vector2(
+                    NodoL.MoveTo(NodoS.Pos + new Vector2(
                         NodeDisplace.X * cosRadians - NodeDisplace.Y * sinRadians,
-                        NodeDisplace.X * sinRadians + NodeDisplace.Y * cosRadians);
+                        NodeDisplace.X * sinRadians + NodeDisplace.Y * cosRadians));
                     if (Vector2.Distance(NodoL.Pos, NodoS.Pos) > Vector2.Distance(NodoS.Pos, Farest))
                         Farest = NodoL.Pos;
 
