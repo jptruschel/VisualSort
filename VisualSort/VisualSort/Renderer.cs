@@ -34,7 +34,7 @@ namespace VisualSort
             // Deixemos assim até que coloquemos full screen com toda a parte de resolução certinho
             graphics.PreferredBackBufferHeight = 720;
             graphics.PreferredBackBufferWidth = 1280;
-            //graphics.PreferMultiSampling = true;
+            graphics.PreferMultiSampling = true;
             graphics.ApplyChanges();
             Content.RootDirectory = "Content";
         }
@@ -48,7 +48,7 @@ namespace VisualSort
         protected override void Initialize()
         {
             isLoading = true;
-            // TODO: Add your initialization logic here
+            Graph.Lines = new LinesList(GraphicsDevice);
 
             base.Initialize();
             isLoading = false;
@@ -83,7 +83,10 @@ namespace VisualSort
 
             // Font
             DefaultFont = Content.Load<SpriteFont>("DefaultFont");
-
+            Graph.Lines.AddLine(new Vector2(-10,-10), new Vector2(10,-10));
+            Graph.Lines.AddLine(new Vector2(10, -10), new Vector2(10, 10));
+            Graph.Lines.AddLine(new Vector2(10, 10), new Vector2(-10, 10));
+            Graph.Lines.AddLine(new Vector2(-10, 10), new Vector2(-10, -10));
             isLoading = false;
         }
 
@@ -130,6 +133,7 @@ namespace VisualSort
                 teste.Pos = new Vector2(32, 32);
                 teste.Update(gameTime);
                 teste.Draw(spriteBatch);
+                Graph.Lines.basicEffect.View = Matrix.CreateLookAt(new Vector3(0.0f + (float)(Math.Sin(gameTime.TotalGameTime.Ticks*0.0000001f) * 20.0f), 0.0f + (float)(Math.Sin(gameTime.TotalGameTime.Ticks*0.0000004f) * 15f), 30.0f), new Vector3(0.0f, 0.0f, 0.0f), Vector3.Up);
                 spriteBatch.Draw(Program.LoadingTexture[2], LoadingPos, null, Color.White * LoadingAlpha * 0.6f, 0.0f,
                     LoadingOrigin, LoadingScale*0.96f, SpriteEffects.None, 0f);
                 spriteBatch.Draw(Program.LoadingTexture[3], LoadingPos, null, Color.White * LoadingAlpha, -LoadingAngle * 0.5f,
@@ -140,6 +144,11 @@ namespace VisualSort
                     LoadingOrigin, LoadingScale, SpriteEffects.None, 0f);
                 spriteBatch.DrawString(DefaultFont, "Loading", LoadingPos + new Vector2(-(DefaultFont.MeasureString("Loading")).X * 0.5f, Program.LoadingTexture[0].Width * 0.56f * LoadingScale), Color.White);
             }
+
+            // Draws all the node connections
+            Graph.Lines.Draw();
+
+            // Draws all the nodes
             // Draws the FPS
             spriteBatch.DrawString(DefaultFont, "FPS: " + (int)(1 / (float)gameTime.ElapsedGameTime.TotalSeconds), new Vector2(0f, 0f), Color.White);
             spriteBatch.End();

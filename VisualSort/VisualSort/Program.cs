@@ -26,11 +26,11 @@ namespace VisualSort
         public static TBlocoInstituições fInstituições = new TBlocoInstituições();
         public static TBlocoProduções fProduções = new TBlocoProduções();
         /* LISTAS DE TODOS OS DADOS UTILIZADOS (listas-mestre) */
-        public static TPessoasList mPessoas = new TPessoasList();
-        public static TPeriódicosList mPeridódicos = new TPeriódicosList();
-        public static TConferênciaList mConferências = new TConferênciaList();
-        public static TProduçõesList mProduções = new TProduçõesList();
-        public static TInstituiçãoList mInstituições = new TInstituiçãoList();
+        public static TBigList mPessoas = new TBigList();
+        public static TBigList mPeridódicos = new TBigList();
+        public static TBigList mConferências = new TBigList();
+        public static TBigList mProduções = new TBigList();
+        public static TBigList mInstituições = new TBigList();
 
 
         /* TEXTURAS USADAS GLOBALMENTE */

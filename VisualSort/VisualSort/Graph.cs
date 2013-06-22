@@ -19,6 +19,7 @@ namespace VisualSort
         public static Vector2 CameraPos = new Vector2(0f, 0f);
         public static float Zoom = 1.0f;
         public static float DefaultNodeSize = 32f;
+        public static LinesList Lines;
 
         // Definição de um Nodo que será printado na tela
         public class TDrawNodo
@@ -70,17 +71,13 @@ namespace VisualSort
                         new Vector2(64, 64), SpriteEffects.None, 0f);
 
                 // Desenha cada Ligação
-                // Pessoas
-                if (this is TPessoa)
+                if (this is TInfoNodo)
                 {
-                    // Cada pessoa
+                    for (int i = 0; i < (this as TInfoNodo).Ligações.Count; i++)
+                    {
+
+                    }
                 }
-            }
-            public bool a()
-            {
-                if (this is TConferência)
-                    return true;
-                return false;
             }
         }
     }
