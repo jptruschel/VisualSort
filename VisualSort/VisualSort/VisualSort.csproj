@@ -62,7 +62,7 @@
     <XnaCompressContent>true</XnaCompressContent>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>0DFF9A52C8D40785D5A4A439F93BE15D5EB59EAB</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>8EE15A8855FA3D3790A6B9B68CC8CF2CD91E5944</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>VisualSort_TemporaryKey.pfx</ManifestKeyFile>
@@ -167,6 +167,9 @@
       <ProductName>Microsoft XNA Framework Redistributable 4.0</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="VisualSort_TemporaryKey.pfx" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\XNA Game Studio\Microsoft.Xna.GameStudio.targets" />
