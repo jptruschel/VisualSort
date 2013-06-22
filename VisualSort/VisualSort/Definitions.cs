@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+
 namespace VisualSort
 {
     // Um vetor de 2 dimensões de inteiros
@@ -257,8 +258,10 @@ namespace VisualSort
                 // Procura uma ligação com esses elementos e esse peso
                 int Índice = this.IndexOf(Nodo);
                 if (Índice == -1)
+                {
                     // Se não havia, cria
                     Add(Nodo);
+                }
             }
 
             return Count - 1;
@@ -285,7 +288,7 @@ namespace VisualSort
         public TPNodo Nodo;             // Informação sobre que tipo é e onde está na lista principal
 
         // Constructors
-        public TInfoNodo(string Nome, TPNodo Nodo, BPos Data) : base() 
+        public TInfoNodo(string Nome, BPos Data) : base() 
         {
             foreach (string substr in Nome.Split(' '))
             {
@@ -293,8 +296,12 @@ namespace VisualSort
                     this.Nome = String.Concat(this.Nome, substr, " ");
                 this.Iniciais = String.Concat(this.Iniciais, substr.Substring(0, 1));
             }
+            if ((this.Nome == null) || (this.Nome.Length == 0))
+                this.Nome = Nome;
             this.Data = Data;
-            this.Nodo = Nodo;
+            this.Nodo = new TPNodo(-1, -1);
+            this.Ligações = new TPNodoList();
+            InitializeLines();
         }
         protected TInfoNodo(string Nome, BPos Data, TPNodo Nodo, bool AddAllWords = false)
         {
@@ -321,8 +328,9 @@ namespace VisualSort
             {
                 if (!Nome.Contains(substr))
                     Cont = false;
-                if (!Iniciais.Contains(substr.Substring(0, 1)))
-                    Cont = false;
+                if (substr.Length >= 1)
+                    if (!Iniciais.Contains(substr.Substring(0, 1)))
+                        Cont = false;
             }
             return Cont;
         }
@@ -330,6 +338,7 @@ namespace VisualSort
         public void AdicionaLigaçãoCom(params TPNodo[] Elementos)
         {
             Ligações.NovaLigação(Elementos);
+            InitializeLines();
         }
         public bool ContémLigaçãoCom(params TPNodo[] Elementos)
         {
@@ -345,9 +354,11 @@ namespace VisualSort
     /// Gerente das Listas-Mestres
     public class TBigList : List<TInfoNodo>
     {
+        public int Tipo;
         // Constrcutor
-        public TBigList() : base()
+        public TBigList(int Tipo) : base()
         {
+            this.Tipo = Tipo;
         }
         // Cria novos elementos
         public Int64 NovoNodo(params TInfoNodo[] Elementos)
@@ -355,7 +366,10 @@ namespace VisualSort
             foreach (TInfoNodo Nodo in Elementos)
             {
                 if (ProcuraNodo(Nodo.Nome, true).Count == 0)
+                {
                     Add(Nodo);
+                    this[this.Count - 1].Nodo = new TPNodo(this.Count-1, Tipo);
+                }
             }
             return Count - 1;
         }
@@ -368,9 +382,13 @@ namespace VisualSort
         {
             return this.FindAll(p => (p.Nodo.Tipo == Tipo));
         }
-        public List<TInfoNodo> ProcuraNodo(bool Selected)
+        public List<TInfoNodo> ProcuraNodo(bool Drawable)
         {
-            return this.FindAll(p => (p.Selected == Selected));
+            return this.FindAll(p => (p.Drawable == Drawable));
+        }
+        public TInfoNodo ProcuraNodoSelecionado()
+        {
+            return this.Find(p => (p.Selected == true));
         }
         public List<TInfoNodo> ProcuraNodo(BPos Data)
         {
@@ -397,8 +415,8 @@ namespace VisualSort
             this.Banana = new BPos(2, 3);
             this.Cebola = new TPNodo(3, 2);
             this.Bliblu = 33;
-            this.Listona = new TBigList();
-            this.Listona.NovoNodo(new TInfoNodo("Bliblu", Cebola, Banana));
+            this.Listona = new TBigList(3);
+            this.Listona.NovoNodo(new TInfoNodo("Bliblu", Banana));
         }
         public override string ToString()
         {
@@ -408,9 +426,4 @@ namespace VisualSort
     }
     // TesteEstaCristiano bla = new TesteEstaCristiano();
     // Console.WriteLine(bla.ToString());
-
-    class Definitions
-    {
-
-    }
 }

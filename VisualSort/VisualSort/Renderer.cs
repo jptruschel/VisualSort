@@ -25,6 +25,12 @@ namespace VisualSort
         private bool isLoading;
         // Default Font
         SpriteFont DefaultFont;
+        // Inputs
+        KeyboardState keyboardState;
+        KeyboardState oldKeyboardState;
+        MouseState ms;
+        float prevWheelValue;
+        float currWheelValue;
 
         Graph.TDrawNodo teste = new Graph.TDrawNodo();
 
@@ -32,8 +38,8 @@ namespace VisualSort
         {
             graphics = new GraphicsDeviceManager(this);
             // Deixemos assim até que coloquemos full screen com toda a parte de resolução certinho
-            graphics.PreferredBackBufferHeight = 720;
             graphics.PreferredBackBufferWidth = 1280;
+            graphics.PreferredBackBufferHeight = 720;
             graphics.PreferMultiSampling = true;
             graphics.ApplyChanges();
             Content.RootDirectory = "Content";
@@ -48,8 +54,11 @@ namespace VisualSort
         protected override void Initialize()
         {
             isLoading = true;
-            Graph.Lines = new LinesList(GraphicsDevice);
+            Graph.DPrimitives = new PrimitiveRenderer(GraphicsDevice);
 
+            Program.ScreenCenter = new Vector2(graphics.PreferredBackBufferWidth * 0.5f, graphics.PreferredBackBufferHeight * 0.5f);
+
+            ms = new MouseState();
             base.Initialize();
             isLoading = false;
         }
@@ -83,10 +92,22 @@ namespace VisualSort
 
             // Font
             DefaultFont = Content.Load<SpriteFont>("DefaultFont");
-            Graph.Lines.AddLine(new Vector2(-10,-10), new Vector2(10,-10));
-            Graph.Lines.AddLine(new Vector2(10, -10), new Vector2(10, 10));
-            Graph.Lines.AddLine(new Vector2(10, 10), new Vector2(-10, 10));
-            Graph.Lines.AddLine(new Vector2(-10, 10), new Vector2(-10, -10));
+
+            // Loads XML File
+
+            // Example
+            Program.mPessoas.NovoNodo(new TInfoNodo("Krug", new BPos(0,0)));
+          //  Program.mPessoas.NovoNodo(new TInfoNodo("Aline", new BPos(0, 1)));
+          //  Program.mPessoas.NovoNodo(new TInfoNodo("Mara Abel", new BPos(0, 2)));
+           // Program.GetNodoFromLists(new TPNodo(0, 0)).AdicionaLigaçãoCom(new TPNodo(1,0));
+           // Program.GetNodoFromLists(new TPNodo(0, 0)).AdicionaLigaçãoCom(new TPNodo(2, 0));
+            for (int i = 1; i <150; i++)
+            {
+                Program.mPessoas.NovoNodo(new TInfoNodo("n" + i, new BPos(0, 0)));
+                Program.GetNodoFromLists(new TPNodo(0, 0)).AdicionaLigaçãoCom(new TPNodo(i, 0));
+            }
+            Graph.SelecionaNodo(new TPNodo(0, 0));
+
             isLoading = false;
         }
 
@@ -114,6 +135,36 @@ namespace VisualSort
             LoadingAngle += (float)gameTime.ElapsedGameTime.TotalSeconds * 2.56f;
             LoadingAngle = LoadingAngle % (MathHelper.Pi * 4);
 
+            // Inputs
+            //Zoom
+            /*ms = Mouse.GetState();
+            prevWheelValue = currWheelValue;
+            currWheelValue = ms.ScrollWheelValue;
+            float newZoom = Graph.Camera.Z + (currWheelValue - prevWheelValue) * 0.0005f;
+            Graph.Camera.X += (Graph.Camera.Z - newZoom) * graphics.PreferredBackBufferWidth;
+            Graph.Camera.Y += (Graph.Camera.Z - newZoom) * graphics.PreferredBackBufferHeight;
+            Graph.Camera.Z = newZoom;
+
+            // Move camera
+            keyboardState = Keyboard.GetState();
+            if (keyboardState.IsKeyDown(Keys.Left))
+            {
+                Graph.Camera.X = Graph.Camera.X - (float)(5.0 * 1/Graph.Camera.Z);
+            }
+            if (keyboardState.IsKeyDown(Keys.Right))
+            {
+                Graph.Camera.X = Graph.Camera.X + (float)(5.0 * 1 / Graph.Camera.Z);
+            }
+            if (keyboardState.IsKeyDown(Keys.Up))
+            {
+                Graph.Camera.Y = Graph.Camera.Y - (float)(5.0 * 1 / Graph.Camera.Z);
+            }
+            if (keyboardState.IsKeyDown(Keys.Down))
+            {
+                Graph.Camera.Y = Graph.Camera.Y + (float)(5.0 * 1 / Graph.Camera.Z);
+            }*/
+            oldKeyboardState = keyboardState;
+
             base.Update(gameTime);
         }
 
@@ -128,12 +179,11 @@ namespace VisualSort
 
             // Draws the Loading Circle
             spriteBatch.Begin();
-            if (!isLoading)
+            if (isLoading)
             {
-                teste.Pos = new Vector2(32, 32);
-                teste.Update(gameTime);
-                teste.Draw(spriteBatch);
-                Graph.Lines.basicEffect.View = Matrix.CreateLookAt(new Vector3(0.0f + (float)(Math.Sin(gameTime.TotalGameTime.Ticks*0.0000001f) * 20.0f), 0.0f + (float)(Math.Sin(gameTime.TotalGameTime.Ticks*0.0000004f) * 15f), 30.0f), new Vector3(0.0f, 0.0f, 0.0f), Vector3.Up);
+                //teste.Pos = new Vector2(32, 32);
+                //teste.Update(gameTime);
+                //teste.Draw(spriteBatch);
                 spriteBatch.Draw(Program.LoadingTexture[2], LoadingPos, null, Color.White * LoadingAlpha * 0.6f, 0.0f,
                     LoadingOrigin, LoadingScale*0.96f, SpriteEffects.None, 0f);
                 spriteBatch.Draw(Program.LoadingTexture[3], LoadingPos, null, Color.White * LoadingAlpha, -LoadingAngle * 0.5f,
@@ -146,11 +196,39 @@ namespace VisualSort
             }
 
             // Draws all the node connections
-            Graph.Lines.Draw();
+            Graph.DPrimitives.Draw();
 
             // Draws all the nodes
+            foreach(TInfoNodo nodo in Program.mPessoas.ProcuraNodo(true))
+            {
+                nodo.Update(gameTime);
+                nodo.Draw(spriteBatch);
+            }
+            foreach (TInfoNodo nodo in Program.mProduções.ProcuraNodo(true))
+            {
+                nodo.Update(gameTime);
+                nodo.Draw(spriteBatch);
+            }
+            foreach (TInfoNodo nodo in Program.mInstituições.ProcuraNodo(true))
+            {
+                nodo.Update(gameTime);
+                nodo.Draw(spriteBatch);
+            }
+            foreach (TInfoNodo nodo in Program.mPeridódicos.ProcuraNodo(true))
+            {
+                nodo.Update(gameTime);
+                nodo.Draw(spriteBatch);
+            }
+            foreach (TInfoNodo nodo in Program.mConferências.ProcuraNodo(true))
+            {
+                nodo.Update(gameTime);
+                nodo.Draw(spriteBatch);
+            }
+
+
             // Draws the FPS
             spriteBatch.DrawString(DefaultFont, "FPS: " + (int)(1 / (float)gameTime.ElapsedGameTime.TotalSeconds), new Vector2(0f, 0f), Color.White);
+           // spriteBatch.DrawString(DefaultFont, "Camera: X=" + Graph.Camera.X.ToString() + " Y=" + Graph.Camera.Y.ToString() + " Z=" + Graph.Camera.Z.ToString(), new Vector2(00f, 20f), Color.White);
             spriteBatch.End();
 
             base.Draw(gameTime);

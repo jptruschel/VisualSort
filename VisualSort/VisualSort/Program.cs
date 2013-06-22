@@ -26,17 +26,37 @@ namespace VisualSort
         public static TBlocoInstituições fInstituições = new TBlocoInstituições();
         public static TBlocoProduções fProduções = new TBlocoProduções();
         /* LISTAS DE TODOS OS DADOS UTILIZADOS (listas-mestre) */
-        public static TBigList mPessoas = new TBigList();
-        public static TBigList mPeridódicos = new TBigList();
-        public static TBigList mConferências = new TBigList();
-        public static TBigList mProduções = new TBigList();
-        public static TBigList mInstituições = new TBigList();
-
+        public static TBigList mPessoas = new TBigList(0);
+        public static TBigList mPeridódicos = new TBigList(1);
+        public static TBigList mConferências = new TBigList(2);
+        public static TBigList mProduções = new TBigList(3);
+        public static TBigList mInstituições = new TBigList(4);
+        // Retorna o Nodo, dado um Ponteiro para Nodo
+        public static TInfoNodo GetNodoFromLists(TPNodo Nodo)
+        {
+            switch (Nodo.Tipo)
+            {
+                case 0:
+                    return Program.mPessoas[(int)Nodo.Índice];
+                case 1:
+                    return Program.mPeridódicos[(int)Nodo.Índice];
+                case 2:
+                    return Program.mConferências[(int)Nodo.Índice];
+                case 3:
+                    return Program.mProduções[(int)Nodo.Índice];
+                case 4:
+                    return Program.mInstituições[(int)Nodo.Índice];
+                default:
+                    return null;
+            }
+        }
 
         /* TEXTURAS USADAS GLOBALMENTE */
         public static Texture2D NodoTex;
         public static Texture2D[] LoadingTexture;
 
+        /* OUTRAS VARIÁVEIS GLOBAIS - DESCULPE, MARA ABEL */
+        public static Vector2 ScreenCenter;
 
         static void Main(string[] args)
         {
