@@ -54,9 +54,12 @@ namespace VisualSort
         /* TEXTURAS USADAS GLOBALMENTE */
         public static Texture2D NodoTex;
         public static Texture2D[] LoadingTexture;
+        public static Texture2D BoxTex;
+        public static SpriteFont TextFont;
 
         /* OUTRAS VARIÁVEIS GLOBAIS - DESCULPE, MARA ABEL */
         public static Vector2 ScreenCenter;
+        public static TInfoNodo NodoSelecionado, NodoMouse;
 
         static void Main(string[] args)
         {

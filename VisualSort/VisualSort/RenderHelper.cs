@@ -16,10 +16,12 @@ namespace VisualSort
     {
         public Vector2 Point1, Point2;
         public Color Color1, Color2;
+        public bool Drawable;
         public DrawLine(Vector2 P1, Vector2 P2, Color Color1, Color Color2)
         {
             Point1 = P1;
             Point2 = P2;
+            Drawable = false;
             this.Color1 = Color1;
             this.Color2 = Color2;
         }
@@ -65,24 +67,26 @@ namespace VisualSort
             if (Lines.Count > 0)
             {
                 VertexPositionColor[] aD = new VertexPositionColor[Lines.Count * 2];
-                //for (int i = 0; i < Lines.Count; i++)
                 int i = 0;
                 while ((i < Lines.Count))
                 {
-                    aD[i * 2] = 
-                        new VertexPositionColor(
-                            new Vector3(
-                                new Vector2(
-                                    Lines[i].Point1.X,// + (Lines[i].Point1.X - Graph.Camera.X) * Graph.Camera.Z,
-                                    Lines[i].Point1.Y),0),// + (Lines[i].Point1.Y - Graph.Camera.Y) * Graph.Camera.Z), 0), 
-                                    Lines[i].Color1);
-                    aD[(i * 2) + 1] = 
-                        new VertexPositionColor(
-                            new Vector3(
-                                new Vector2(
-                                    Lines[i].Point2.X,// + (Lines[i].Point2.X - Graph.Camera.X) * Graph.Camera.Z,
-                                    Lines[i].Point2.Y),0),// + (Lines[i].Point2.Y - Graph.Camera.Y) * Graph.Camera.Z), 0),
-                                    Lines[i].Color2);
+                    if (Lines[i].Drawable)
+                    {
+                        aD[i * 2] =
+                            new VertexPositionColor(
+                                new Vector3(
+                                    new Vector2(
+                                        Lines[i].Point1.X,
+                                        Lines[i].Point1.Y), 0),
+                                        Lines[i].Color1);
+                        aD[(i * 2) + 1] =
+                            new VertexPositionColor(
+                                new Vector3(
+                                    new Vector2(
+                                        Lines[i].Point2.X,
+                                        Lines[i].Point2.Y), 0),
+                                        Lines[i].Color2);
+                    }
                     i++;
                 }
                 basicEffect.View = Graph.Camera._transform;
@@ -109,6 +113,19 @@ namespace VisualSort
                //     return i;
             Lines.Add(new DrawLine(point1, point2, Color1, Color2));
             return Lines.Count - 1;
+        }
+        public void SetDrawability(int Index, bool Drawable)
+        {
+            Lines[Index].Drawable = Drawable;
+        }
+        public void ResetDrawability()
+        {
+            for (int i = 0; i < Lines.Count; i++)
+                Lines[i].Drawable = false;
+        }
+        public void RemoveLine(int Index)
+        {
+            Lines.RemoveAt(Index);
         }
     }
     class RenderHelper

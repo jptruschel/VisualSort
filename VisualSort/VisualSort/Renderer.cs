@@ -58,8 +58,8 @@ namespace VisualSort
 
             Program.ScreenCenter = new Vector2(graphics.PreferredBackBufferWidth * 0.5f, graphics.PreferredBackBufferHeight * 0.5f);
 
-            Graph.Camera = new Graph.Camera2d();
-            Graph.Camera.Pos = new Vector2(500.0f, 200.0f);
+            Graph.Camera = new Graph.Camera2d(graphics.GraphicsDevice);
+            Graph.Camera.Pos = new Vector2(0f, 0f);
 
             ms = new MouseState();
             base.Initialize();
@@ -79,6 +79,7 @@ namespace VisualSort
 
             // Load the Sprites
             Program.NodoTex = Content.Load<Texture2D>("Nodo64");
+            Program.BoxTex = Content.Load<Texture2D>("box");
             // Initializes the Loading Circle
             Program.LoadingTexture = new Texture2D[4];
             Program.LoadingTexture[0] = Content.Load<Texture2D>("Loading1");
@@ -95,6 +96,7 @@ namespace VisualSort
 
             // Font
             DefaultFont = Content.Load<SpriteFont>("DefaultFont");
+            Program.TextFont = Content.Load<SpriteFont>("TextFont");
 
             // Loads XML File
 
@@ -148,23 +150,57 @@ namespace VisualSort
             keyboardState = Keyboard.GetState();
             if (keyboardState.IsKeyDown(Keys.Left))
             {
-                Graph.Camera.Move(new Vector2(-1.0f * (10/Graph.Camera.Zoom), 0f));
+                if (keyboardState.IsKeyDown(Keys.LeftShift))
+                    Graph.Camera.Rotation += 0.02f;
+                else
+                {
+                    Graph.Camera.Move(
+                        new Vector2(
+                            -1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Cos(Graph.Camera.Rotation)),
+                            1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Sin(Graph.Camera.Rotation))));
+                }
             }
             if (keyboardState.IsKeyDown(Keys.Right))
             {
-                Graph.Camera.Move(new Vector2(1.0f * (10 / Graph.Camera.Zoom), 0f));
+                if (keyboardState.IsKeyDown(Keys.LeftShift))
+                    Graph.Camera.Rotation -= 0.02f;
+                else
+                {
+                    Graph.Camera.Move(
+                        new Vector2(
+                            1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Cos(Graph.Camera.Rotation)),
+                            -1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Sin(Graph.Camera.Rotation))));
+                }
             }
             if (keyboardState.IsKeyDown(Keys.Up))
             {
-                Graph.Camera.Move(new Vector2(0f, -1.0f * (10 / Graph.Camera.Zoom)));
+                if (keyboardState.IsKeyDown(Keys.LeftShift))
+                    Graph.Camera.Zoom += 0.01f;
+                else
+                {
+                    Graph.Camera.Move(
+                        new Vector2(
+                            -1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Sin(Graph.Camera.Rotation)),
+                            -1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Cos(Graph.Camera.Rotation))));
+                }
             }
             if (keyboardState.IsKeyDown(Keys.Down))
             {
-                Graph.Camera.Move(new Vector2(0f, 1.0f * (10 / Graph.Camera.Zoom)));
+                if (keyboardState.IsKeyDown(Keys.LeftShift))
+                    Graph.Camera.Zoom -= 0.01f;
+                else
+                {
+                    Graph.Camera.Move(
+                        new Vector2(
+                            1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Sin(Graph.Camera.Rotation)),
+                            1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Cos(Graph.Camera.Rotation))));
+                }
             }
             oldKeyboardState = keyboardState;
-            // Update Mouse Position
-            Graph.Camera.UpdateMouse(graphics.GraphicsDevice, ms);
+            //Graph.Camera.Rotation += 0.01f;
+
+            // Update Camer Info (mouse and limits)
+            Graph.Camera.UpdateCameraInfo(ms);
 
             base.Update(gameTime);
         }
@@ -175,9 +211,9 @@ namespace VisualSort
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(new Color(10, 35, 114));//Color.DarkSlateGray);
-
-            
+            //GraphicsDevice.Clear(new Color(10, 35, 114));//Color.DarkSlateGray);
+            //GraphicsDevice.Clear(new Color(0, 25, 014));
+            GraphicsDevice.Clear(new Color(0, 14, 25));
             spriteBatch.Begin();
 
             // Draws the Loading Circle
@@ -202,7 +238,7 @@ namespace VisualSort
                         null,
                         null,
                         null,
-                        Graph.Camera.get_transformation(graphics.GraphicsDevice));
+                        Graph.Camera.get_transformation());
 
             // Draws all the node connections
             Graph.DPrimitives.Draw();
@@ -234,12 +270,30 @@ namespace VisualSort
                 nodo.Draw(spriteBatch);
             }
 
-
             spriteBatch.End();
+            // Desenho sem transformação da câmera
+
             spriteBatch.Begin();
+
+            // Nome do nodo com mouse em cima
+            if ((Program.NodoMouse != null) && (Program.NodoMouse.MouseOver == true))
+            {
+                Vector2 DPos = Vector2.Transform(Program.NodoMouse.Pos, Graph.Camera.get_transformation());
+                Vector2 NameSize = Program.TextFont.MeasureString(Program.NodoMouse.Nome);
+                DPos.X += (Graph.DefaultNodeSize*0.5f * Graph.Camera.Zoom);
+                spriteBatch.Draw(Program.BoxTex,
+                    new Rectangle(
+                        (int)(DPos.X),
+                        (int)(DPos.Y),
+                        (int)(NameSize.X),
+                        (int)(NameSize.Y)),
+                    null,
+                    Color.White, 0, new Vector2(0, 0), SpriteEffects.None, 0f);
+                spriteBatch.DrawString(Program.TextFont, Program.NodoMouse.Nome, DPos, Color.White);
+            }
             // Draws the FPS
             spriteBatch.DrawString(DefaultFont, "FPS: " + (int)(1 / (float)gameTime.ElapsedGameTime.TotalSeconds), new Vector2(0f, 0f), Color.White);
-            spriteBatch.DrawString(DefaultFont, "Camera: X=" + Graph.Camera.Pos.X.ToString() + " Y=" + Graph.Camera.Pos.Y.ToString() + " Z=" + Graph.Camera.Zoom.ToString(), new Vector2(00f, 20f), Color.White);
+            spriteBatch.DrawString(DefaultFont, "Camera: X=" + Graph.Camera.Pos.X.ToString() + " Y=" + Graph.Camera.Pos.Y.ToString() + " Z=" + Graph.Camera.Zoom.ToString() + " R=" + Graph.Camera.Rotation.ToString(), new Vector2(00f, 20f), Color.White);
             spriteBatch.DrawString(DefaultFont, "Mouse: X=" + Graph.Camera.mousePos.X.ToString() + " Y=" + Graph.Camera.mousePos.Y.ToString(), new Vector2(00f, 40f), Color.White);
             spriteBatch.End();
 

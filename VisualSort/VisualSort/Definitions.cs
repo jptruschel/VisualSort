@@ -242,46 +242,10 @@ namespace VisualSort
         }
     }
 
-    // Uma lista de Ponteiros para os Dados
-    public class TPNodoList : List<TPNodo>
-    {
-        // Constructor
-        public TPNodoList(): base()
-        {
-        }
-        // Nova ligação
-        public int NovaLigação(params TPNodo[] Elementos)
-        {
-            // Para cada elemento
-            foreach (TPNodo Nodo in Elementos)
-            {
-                // Procura uma ligação com esses elementos e esse peso
-                int Índice = this.IndexOf(Nodo);
-                if (Índice == -1)
-                {
-                    // Se não havia, cria
-                    Add(Nodo);
-                }
-            }
-
-            return Count - 1;
-        }
-        // Deleta uma ligação
-        public void DeletaLigação(int Peso, params TPNodo[] Elementos)
-        {
-            foreach (TPNodo Nodo in Elementos)
-            {
-                int Índice = IndexOf(Nodo);
-                if (Índice > -1)
-                    RemoveAt(Índice);
-            }
-        }
-    }
-
     // Um nodo de informação
     public class TInfoNodo : Graph.TDrawNodo
     {
-        public TPNodoList Ligações;     // As ligações do elemento com todos os outros
+        public List<TPNodo> Ligações;   // As ligações do elemento com todos os outros
         public string Nome;             // Somente possui palavras suficentemente interessantes para pesquisa rápida
         public string Iniciais;         // Para ainda mais rápida pesquisa
         public BPos Data;               // Posição no disco (bloco e offset) de todos os dados
@@ -300,20 +264,10 @@ namespace VisualSort
                 this.Nome = Nome;
             this.Data = Data;
             this.Nodo = new TPNodo(-1, -1);
-            this.Ligações = new TPNodoList();
+            this.Ligações = new List<TPNodo>();
             InitializeLines();
         }
-        protected TInfoNodo(string Nome, BPos Data, TPNodo Nodo, bool AddAllWords = false)
-        {
-            foreach (string substr in Nome.Split(' '))
-            {
-                if ((substr.Count() >= 3) || (AddAllWords))
-                    this.Nome = String.Concat(this.Nome, substr, " ");
-                this.Iniciais = String.Concat(this.Iniciais, substr.Substring(0, 1));
-            }
-            this.Data = Data;
-            this.Nodo = Nodo;
-        }
+
         public TInfoNodo()
         {
             this.Data.Bloco = -1;
@@ -337,8 +291,31 @@ namespace VisualSort
         // Funções para Adicionar (e verificar) Ligações com outros Nodos
         public void AdicionaLigaçãoCom(params TPNodo[] Elementos)
         {
-            Ligações.NovaLigação(Elementos);
-            InitializeLines();
+            // Para cada elemento
+            foreach (TPNodo Nodo in Elementos)
+            {
+                // Procura uma ligação com esses elementos e esse peso
+                int Índice = Ligações.IndexOf(Nodo);
+                if (Índice == -1)
+                {
+                    // Se não havia, cria
+                    Ligações.Add(Nodo);
+                    NewLine(Ligações.Count - 1);
+                }
+            }
+        }
+        // Deleta uma ligação
+        public void DeletaLigaçãoCom(params TPNodo[] Elementos)
+        {
+            foreach (TPNodo Nodo in Elementos)
+            {
+                int Índice = Ligações.IndexOf(Nodo);
+                if (Índice > -1)
+                {
+                    Ligações.RemoveAt(Índice);
+                    Graph.DPrimitives.SetDrawability(Lines[Índice], false);
+                }
+            }
         }
         public bool ContémLigaçãoCom(params TPNodo[] Elementos)
         {
