@@ -28,11 +28,10 @@ namespace VisualSort
         // Inputs
         KeyboardState keyboardState;
         KeyboardState oldKeyboardState;
-        MouseState ms;
+        MouseState mouseState, oldMouseState;
+        int mouseTimer;
         float prevWheelValue;
         float currWheelValue;
-
-        Graph.TDrawNodo teste = new Graph.TDrawNodo();
 
         public Renderer()
         {
@@ -40,6 +39,9 @@ namespace VisualSort
             // Deixemos assim até que coloquemos full screen com toda a parte de resolução certinho
             graphics.PreferredBackBufferWidth = 1280;
             graphics.PreferredBackBufferHeight = 720;
+            graphics.PreferredBackBufferWidth = 1600;
+            graphics.PreferredBackBufferHeight = 900;
+            //graphics.IsFullScreen = true;
             graphics.PreferMultiSampling = true;
             graphics.ApplyChanges();
             Content.RootDirectory = "Content";
@@ -54,14 +56,21 @@ namespace VisualSort
         protected override void Initialize()
         {
             isLoading = true;
-            Graph.DPrimitives = new PrimitiveRenderer(GraphicsDevice);
+            
+            // Inicializa o modo de visualização
+            Program.ViewMode = 0;
+            AppGraphics.MaxNodos = new List<TDrawMaxNodo>();
+            AppGraphics.MaxNodos.Add(new TDrawMaxNodo(null));
+            Program.maxNodoSelecionado = 0;
 
-            Program.ScreenCenter = new Vector2(graphics.PreferredBackBufferWidth * 0.5f, graphics.PreferredBackBufferHeight * 0.5f);
+            AppGraphics.DPrimitives = new PrimitiveRenderer(GraphicsDevice);
 
-            Graph.Camera = new Graph.Camera2d(graphics.GraphicsDevice);
-            Graph.Camera.Pos = new Vector2(0f, 0f);
+            AppGraphics.ScreenCenter = new Vector2(graphics.PreferredBackBufferWidth * 0.5f, graphics.PreferredBackBufferHeight * 0.5f);
 
-            ms = new MouseState();
+            AppGraphics.Camera = new Camera2d(graphics.GraphicsDevice);
+            AppGraphics.Camera.Pos = new Vector2(0f, 0f);
+
+            mouseState = new MouseState();
             base.Initialize();
             isLoading = false;
         }
@@ -78,17 +87,18 @@ namespace VisualSort
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // Load the Sprites
-            Program.NodoTex = Content.Load<Texture2D>("Nodo64");
-            Program.BoxTex = Content.Load<Texture2D>("box");
+            AppGraphics.NodoTex = Content.Load<Texture2D>("Nodo");
+            AppGraphics.BoxTex = Content.Load<Texture2D>("box");
             // Initializes the Loading Circle
-            Program.LoadingTexture = new Texture2D[4];
-            Program.LoadingTexture[0] = Content.Load<Texture2D>("Loading1");
-            Program.LoadingTexture[1] = Content.Load<Texture2D>("Loading2");
-            Program.LoadingTexture[2] = Content.Load<Texture2D>("Loading3");
-            Program.LoadingTexture[3] = Content.Load<Texture2D>("Loading4");
+            AppGraphics.LoadingTexture = new Texture2D[5];
+            AppGraphics.LoadingTexture[0] = Content.Load<Texture2D>("Loading1");
+            AppGraphics.LoadingTexture[1] = Content.Load<Texture2D>("Loading2");
+            AppGraphics.LoadingTexture[2] = Content.Load<Texture2D>("Loading3");
+            AppGraphics.LoadingTexture[3] = Content.Load<Texture2D>("Loading4");
+            AppGraphics.LoadingTexture[4] = Content.Load<Texture2D>("loading5");
             Viewport viewport = graphics.GraphicsDevice.Viewport;
-            LoadingOrigin.X = Program.LoadingTexture[0].Width / 2;
-            LoadingOrigin.Y = Program.LoadingTexture[1].Height / 2;
+            LoadingOrigin.X = AppGraphics.LoadingTexture[0].Width / 2;
+            LoadingOrigin.Y = AppGraphics.LoadingTexture[1].Height / 2;
             LoadingScale = 0.64f;
             LoadingAlpha = 0.8f;
             LoadingPos.X = viewport.Width / 2f;// - (LoadingScale * LoadingTexture1.Width * 0.64f);
@@ -96,22 +106,27 @@ namespace VisualSort
 
             // Font
             DefaultFont = Content.Load<SpriteFont>("DefaultFont");
-            Program.TextFont = Content.Load<SpriteFont>("TextFont");
+            AppGraphics.TextFont = Content.Load<SpriteFont>("TextFont");
 
-            // Loads XML File
+            // Carrega o XML
 
             // Example
-            Program.mPessoas.NovoNodo(new TInfoNodo("Krug", new BPos(0,0)));
+            Program.mPessoas.NovoNodo(new TInfoNodo("Leandro Krug Wives", new BPos(0,0)));
           //  Program.mPessoas.NovoNodo(new TInfoNodo("Aline", new BPos(0, 1)));
           //  Program.mPessoas.NovoNodo(new TInfoNodo("Mara Abel", new BPos(0, 2)));
            // Program.GetNodoFromLists(new TPNodo(0, 0)).AdicionaLigaçãoCom(new TPNodo(1,0));
            // Program.GetNodoFromLists(new TPNodo(0, 0)).AdicionaLigaçãoCom(new TPNodo(2, 0));
-            for (int i = 1; i < 500; i++)
+            for (int i = 1; i < 50; i++)
             {
                 Program.mPessoas.NovoNodo(new TInfoNodo("n" + i, new BPos(0, 0)));
-                Program.GetNodoFromLists(new TPNodo(0, 0)).AdicionaLigaçãoCom(new TPNodo(i, 0));
+                //Program.GetNodoFromLists(new TPNodo(0, 0)).AdicionaLigaçãoCom(new TPNodo(i, 0));
+                for (int j = 0; j < i; j++)
+                {
+                    Program.GetNodoFromLists(new TPNodo(j, 0)).AdicionaLigaçãoCom(new TPNodo(i, 0));
+                    Program.GetNodoFromLists(new TPNodo(i, 0)).AdicionaLigaçãoCom(new TPNodo(j, 0));
+                }
             }
-            Graph.SelecionaNodo(new TPNodo(0, 0));
+            AppGraphics.SelecionaNodo(new TPNodo(0, 0), 0);
 
             isLoading = false;
         }
@@ -142,65 +157,99 @@ namespace VisualSort
 
             // Inputs
             //Zoom
-            ms = Mouse.GetState();
+            mouseState = Mouse.GetState();
             prevWheelValue = currWheelValue;
-            currWheelValue = ms.ScrollWheelValue;
-            Graph.Camera.Zoom = Graph.Camera.Zoom + (currWheelValue - prevWheelValue) * 0.001f * (Graph.Camera.Zoom);
+            currWheelValue = mouseState.ScrollWheelValue;
+            AppGraphics.Camera.Zoom = AppGraphics.Camera.Zoom + (currWheelValue - prevWheelValue) * 0.001f * (AppGraphics.Camera.Zoom);
+            if (mouseState.RightButton == ButtonState.Pressed)
+            {
+                if (oldMouseState.RightButton == ButtonState.Pressed)
+                {
+                    AppGraphics.Camera.Move(
+                        (new Vector2(
+                            oldMouseState.X,
+                            oldMouseState.Y) - 
+                         new Vector2(
+                             mouseState.X,
+                             mouseState.Y))
+                         * (1 / AppGraphics.Camera.Zoom));
+                }
+            }
+            // Double Click Timer
+            if (mouseState.LeftButton == ButtonState.Released)
+            {
+                if (oldMouseState.LeftButton == ButtonState.Pressed)
+                {
+                    mouseTimer = 0;
+                }
+            }
+            // Verifica Double Click - seleciona, se houver
+            if (mouseState.LeftButton == ButtonState.Pressed)
+            {
+                if (oldMouseState.LeftButton == ButtonState.Released)
+                    if (mouseTimer < 10f)
+                        if (Program.NodoMouse != null)
+                            if (Program.NodoMouse.MouseOver == true)
+                                AppGraphics.SelecionaNodo(Program.NodoMouse.Nodo, 0);
+            }
+            if (mouseTimer < 15)
+                mouseTimer++;
+            oldMouseState = mouseState;
             // Move camera
             keyboardState = Keyboard.GetState();
             if (keyboardState.IsKeyDown(Keys.Left))
             {
                 if (keyboardState.IsKeyDown(Keys.LeftShift))
-                    Graph.Camera.Rotation += 0.02f;
+                    AppGraphics.Camera.Rotation += 0.02f;
                 else
                 {
-                    Graph.Camera.Move(
+                    AppGraphics.Camera.Move(
                         new Vector2(
-                            -1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Cos(Graph.Camera.Rotation)),
-                            1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Sin(Graph.Camera.Rotation))));
+                            -1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Cos(AppGraphics.Camera.Rotation)),
+                            1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Sin(AppGraphics.Camera.Rotation))));
                 }
             }
             if (keyboardState.IsKeyDown(Keys.Right))
             {
                 if (keyboardState.IsKeyDown(Keys.LeftShift))
-                    Graph.Camera.Rotation -= 0.02f;
+                    AppGraphics.Camera.Rotation -= 0.02f;
                 else
                 {
-                    Graph.Camera.Move(
+                    AppGraphics.Camera.Move(
                         new Vector2(
-                            1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Cos(Graph.Camera.Rotation)),
-                            -1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Sin(Graph.Camera.Rotation))));
+                            1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Cos(AppGraphics.Camera.Rotation)),
+                            -1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Sin(AppGraphics.Camera.Rotation))));
                 }
             }
             if (keyboardState.IsKeyDown(Keys.Up))
             {
                 if (keyboardState.IsKeyDown(Keys.LeftShift))
-                    Graph.Camera.Zoom += 0.01f;
+                    AppGraphics.Camera.Zoom += 0.01f;
                 else
                 {
-                    Graph.Camera.Move(
+                    AppGraphics.Camera.Move(
                         new Vector2(
-                            -1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Sin(Graph.Camera.Rotation)),
-                            -1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Cos(Graph.Camera.Rotation))));
+                            -1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Sin(AppGraphics.Camera.Rotation)),
+                            -1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Cos(AppGraphics.Camera.Rotation))));
                 }
             }
             if (keyboardState.IsKeyDown(Keys.Down))
             {
                 if (keyboardState.IsKeyDown(Keys.LeftShift))
-                    Graph.Camera.Zoom -= 0.01f;
+                    AppGraphics.Camera.Zoom -= 0.01f;
                 else
                 {
-                    Graph.Camera.Move(
+                    AppGraphics.Camera.Move(
                         new Vector2(
-                            1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Sin(Graph.Camera.Rotation)),
-                            1.0f * (10 / Graph.Camera.Zoom) * (float)(Math.Cos(Graph.Camera.Rotation))));
+                            1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Sin(AppGraphics.Camera.Rotation)),
+                            1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Cos(AppGraphics.Camera.Rotation))));
                 }
             }
             oldKeyboardState = keyboardState;
             //Graph.Camera.Rotation += 0.01f;
 
             // Update Camer Info (mouse and limits)
-            Graph.Camera.UpdateCameraInfo(ms);
+            AppGraphics.Camera.UpdateCameraInfo(mouseState);
 
             base.Update(gameTime);
         }
@@ -219,15 +268,15 @@ namespace VisualSort
             // Draws the Loading Circle
             if (isLoading)
             {
-                spriteBatch.Draw(Program.LoadingTexture[2], LoadingPos, null, Color.White * LoadingAlpha * 0.6f, 0.0f,
+                spriteBatch.Draw(AppGraphics.LoadingTexture[2], LoadingPos, null, Color.White * LoadingAlpha * 0.6f, 0.0f,
                     LoadingOrigin, LoadingScale*0.96f, SpriteEffects.None, 0f);
-                spriteBatch.Draw(Program.LoadingTexture[3], LoadingPos, null, Color.White * LoadingAlpha, -LoadingAngle * 0.5f,
+                spriteBatch.Draw(AppGraphics.LoadingTexture[3], LoadingPos, null, Color.White * LoadingAlpha, -LoadingAngle * 0.5f,
                     LoadingOrigin, LoadingScale * 0.96f, SpriteEffects.None, 0f);
-                spriteBatch.Draw(Program.LoadingTexture[0], LoadingPos, null, Color.White * LoadingAlpha, -LoadingAngle,
+                spriteBatch.Draw(AppGraphics.LoadingTexture[0], LoadingPos, null, Color.White * LoadingAlpha, -LoadingAngle,
                     LoadingOrigin, LoadingScale, SpriteEffects.None, 0f);
-                spriteBatch.Draw(Program.LoadingTexture[1], LoadingPos, null, Color.White * LoadingAlpha, LoadingAngle,
+                spriteBatch.Draw(AppGraphics.LoadingTexture[1], LoadingPos, null, Color.White * LoadingAlpha, LoadingAngle,
                     LoadingOrigin, LoadingScale, SpriteEffects.None, 0f);
-                spriteBatch.DrawString(DefaultFont, "Loading", LoadingPos + new Vector2(-(DefaultFont.MeasureString("Loading")).X * 0.5f, Program.LoadingTexture[0].Width * 0.56f * LoadingScale), Color.White);
+                spriteBatch.DrawString(DefaultFont, "Loading", LoadingPos + new Vector2(-(DefaultFont.MeasureString("Loading")).X * 0.5f, AppGraphics.LoadingTexture[0].Width * 0.56f * LoadingScale), Color.White);
             }
 
             // Ends normal drawing and begins drawing with Camera
@@ -238,10 +287,10 @@ namespace VisualSort
                         null,
                         null,
                         null,
-                        Graph.Camera.get_transformation());
+                        AppGraphics.Camera.get_transformation());
 
             // Draws all the node connections
-            Graph.DPrimitives.Draw();
+            AppGraphics.DPrimitives.Draw();
 
             // Draws all the nodes
             foreach(TInfoNodo nodo in Program.mPessoas.ProcuraNodo(true))
@@ -278,10 +327,11 @@ namespace VisualSort
             // Nome do nodo com mouse em cima
             if ((Program.NodoMouse != null) && (Program.NodoMouse.MouseOver == true))
             {
-                Vector2 DPos = Vector2.Transform(Program.NodoMouse.Pos, Graph.Camera.get_transformation());
-                Vector2 NameSize = Program.TextFont.MeasureString(Program.NodoMouse.Nome);
-                DPos.X += (Graph.DefaultNodeSize*0.5f * Graph.Camera.Zoom);
-                spriteBatch.Draw(Program.BoxTex,
+                Vector2 DPos = Vector2.Transform(Program.NodoMouse.Pos, AppGraphics.Camera.get_transformation());
+                Vector2 NameSize = AppGraphics.TextFont.MeasureString(Program.NodoMouse.Nome);
+                DPos.X += (AppGraphics.DefaultNodeSize*0.5f * AppGraphics.Camera.Zoom);
+                DPos.Y -= NameSize.Y * 0.5f;
+                spriteBatch.Draw(AppGraphics.BoxTex,
                     new Rectangle(
                         (int)(DPos.X),
                         (int)(DPos.Y),
@@ -289,12 +339,12 @@ namespace VisualSort
                         (int)(NameSize.Y)),
                     null,
                     Color.White, 0, new Vector2(0, 0), SpriteEffects.None, 0f);
-                spriteBatch.DrawString(Program.TextFont, Program.NodoMouse.Nome, DPos, Color.White);
+                spriteBatch.DrawString(AppGraphics.TextFont, Program.NodoMouse.Nome, DPos, Color.White);
             }
             // Draws the FPS
             spriteBatch.DrawString(DefaultFont, "FPS: " + (int)(1 / (float)gameTime.ElapsedGameTime.TotalSeconds), new Vector2(0f, 0f), Color.White);
-            spriteBatch.DrawString(DefaultFont, "Camera: X=" + Graph.Camera.Pos.X.ToString() + " Y=" + Graph.Camera.Pos.Y.ToString() + " Z=" + Graph.Camera.Zoom.ToString() + " R=" + Graph.Camera.Rotation.ToString(), new Vector2(00f, 20f), Color.White);
-            spriteBatch.DrawString(DefaultFont, "Mouse: X=" + Graph.Camera.mousePos.X.ToString() + " Y=" + Graph.Camera.mousePos.Y.ToString(), new Vector2(00f, 40f), Color.White);
+            spriteBatch.DrawString(DefaultFont, "Camera: X=" + AppGraphics.Camera.Pos.X.ToString() + " Y=" + AppGraphics.Camera.Pos.Y.ToString() + " Z=" + AppGraphics.Camera.Zoom.ToString() + " R=" + AppGraphics.Camera.Rotation.ToString(), new Vector2(00f, 20f), Color.White);
+            spriteBatch.DrawString(DefaultFont, "Mouse: X=" + AppGraphics.Camera.mousePos.X.ToString() + " Y=" + AppGraphics.Camera.mousePos.Y.ToString(), new Vector2(00f, 40f), Color.White);
             spriteBatch.End();
 
             base.Draw(gameTime);

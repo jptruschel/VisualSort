@@ -243,7 +243,7 @@ namespace VisualSort
     }
 
     // Um nodo de informação
-    public class TInfoNodo : Graph.TDrawNodo
+    public class TInfoNodo : TDrawNodo
     {
         public List<TPNodo> Ligações;   // As ligações do elemento com todos os outros
         public string Nome;             // Somente possui palavras suficentemente interessantes para pesquisa rápida
@@ -298,6 +298,7 @@ namespace VisualSort
                 int Índice = Ligações.IndexOf(Nodo);
                 if (Índice == -1)
                 {
+                    Console.WriteLine("a");
                     // Se não havia, cria
                     Ligações.Add(Nodo);
                     NewLine(Ligações.Count - 1);
@@ -313,7 +314,7 @@ namespace VisualSort
                 if (Índice > -1)
                 {
                     Ligações.RemoveAt(Índice);
-                    Graph.DPrimitives.SetDrawability(Lines[Índice], false);
+                    AppGraphics.DPrimitives.SetDrawability(Lines[Índice], false);
                 }
             }
         }
@@ -377,7 +378,7 @@ namespace VisualSort
         }
     }
 
-    //testa essa:
+    // classe de teste
     public class TesteEstaCristiano
     {
         string Nome;

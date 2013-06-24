@@ -16,9 +16,9 @@ namespace VisualSort
     static class Program
     {
         /// <summary>
-        /// The main entry point for the application.
+        /// Algumas definições globais e o início do programa
         /// </summary>
-       
+
         /* BLOCOS DE DADOS SALVOS NO DISCO */
         public static TBlocoPessoas fPessoas = new TBlocoPessoas();
         public static TBlocoPeriódicos fPeriódicos = new TBlocoPeriódicos();
@@ -51,14 +51,18 @@ namespace VisualSort
             }
         }
 
-        /* TEXTURAS USADAS GLOBALMENTE */
-        public static Texture2D NodoTex;
-        public static Texture2D[] LoadingTexture;
-        public static Texture2D BoxTex;
-        public static SpriteFont TextFont;
+        /// O modo de Visualização Selecionado
+        ///   0= Nodo (usando somente MaxNodos[0]
+        ///   1= Pessoas
+        ///   2= Periódicos
+        ///   3= Conferências
+        ///   4= Produção (usando MaxNodos[Artigos.Count])
+        ///   5= Instituições (usando MaxNodos[Ins.Count])
+        /// Por default = 0;
+        public static int ViewMode = 0;
+        public static int maxNodoSelecionado = 0;
 
         /* OUTRAS VARIÁVEIS GLOBAIS - DESCULPE, MARA ABEL */
-        public static Vector2 ScreenCenter;
         public static TInfoNodo NodoSelecionado, NodoMouse;
 
         static void Main(string[] args)
