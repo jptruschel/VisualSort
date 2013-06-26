@@ -52,7 +52,7 @@ namespace VisualSort
         }
 
         /// O modo de Visualização Selecionado
-        ///   0= Nodo (usando somente MaxNodos[0]
+        ///   0= Nodo (MaxNodoSelecionad: desenhado; Voltar/Avançar)
         ///   1= Pessoas
         ///   2= Periódicos
         ///   3= Conferências
@@ -63,7 +63,10 @@ namespace VisualSort
         public static int maxNodoSelecionado = 0;
 
         /* OUTRAS VARIÁVEIS GLOBAIS - DESCULPE, MARA ABEL */
-        public static TInfoNodo NodoSelecionado, NodoMouse;
+        public static TInfoNodo NodoSelecionado;
+        public static TDrawNodo NodoMouse;
+        public static int MaxNodoSelecionado;
+        public static TDrawMaxNodo MaxNodoMouse;
 
         static void Main(string[] args)
         {

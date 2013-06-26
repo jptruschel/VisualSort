@@ -243,13 +243,14 @@ namespace VisualSort
     }
 
     // Um nodo de informação
-    public class TInfoNodo : TDrawNodo
+    public class TInfoNodo
     {
         public List<TPNodo> Ligações;   // As ligações do elemento com todos os outros
         public string Nome;             // Somente possui palavras suficentemente interessantes para pesquisa rápida
         public string Iniciais;         // Para ainda mais rápida pesquisa
         public BPos Data;               // Posição no disco (bloco e offset) de todos os dados
         public TPNodo Nodo;             // Informação sobre que tipo é e onde está na lista principal
+        public TDrawNodo DrawNodo;      // Nodo de desenho (ponteiro)
 
         // Constructors
         public TInfoNodo(string Nome, BPos Data) : base() 
@@ -265,13 +266,14 @@ namespace VisualSort
             this.Data = Data;
             this.Nodo = new TPNodo(-1, -1);
             this.Ligações = new List<TPNodo>();
-            InitializeLines();
+            DrawNodo = null;
         }
 
         public TInfoNodo()
         {
             this.Data.Bloco = -1;
             this.Data.Offset = -1;
+            DrawNodo = null;
         }
         // Função que verifica se o nome de entrada é o mesmo (ou seja, se todas as palavras de Value estão em Nome)
         public bool MesmoNome(string Value, bool ForceEqual)
@@ -298,10 +300,8 @@ namespace VisualSort
                 int Índice = Ligações.IndexOf(Nodo);
                 if (Índice == -1)
                 {
-                    Console.WriteLine("a");
                     // Se não havia, cria
                     Ligações.Add(Nodo);
-                    NewLine(Ligações.Count - 1);
                 }
             }
         }
@@ -314,7 +314,6 @@ namespace VisualSort
                 if (Índice > -1)
                 {
                     Ligações.RemoveAt(Índice);
-                    AppGraphics.DPrimitives.SetDrawability(Lines[Índice], false);
                 }
             }
         }
@@ -359,14 +358,6 @@ namespace VisualSort
         public List<TInfoNodo> ProcuraNodo(int Tipo)
         {
             return this.FindAll(p => (p.Nodo.Tipo == Tipo));
-        }
-        public List<TInfoNodo> ProcuraNodo(bool Drawable)
-        {
-            return this.FindAll(p => (p.Drawable == Drawable));
-        }
-        public TInfoNodo ProcuraNodoSelecionado()
-        {
-            return this.Find(p => (p.Selected == true));
         }
         public List<TInfoNodo> ProcuraNodo(BPos Data)
         {

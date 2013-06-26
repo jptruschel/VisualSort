@@ -16,97 +16,67 @@ namespace VisualSort
     // Definição de um Nodo que será printado na tela - base para todos os nodos utilizados no programa
     public class TDrawNodo
     {
-        public Vector2 Pos;
+        public Vector2 Pos;         // posição atual 
+        public Vector2 Speed;       // velocidade
+        public Vector2 FinalPos;    // posição final (=Pos, exceto quando está animando)
+        public float SpeedAlpha;
         public Color Color;
-        public bool Selected, Drawable, MouseOver;
+        public bool Selected, MouseOver;
         public float RotAngle;
-        public List<int> Lines;
+        public TInfoNodo InfoNodo;
 
-        public TDrawNodo()
+        public TDrawNodo(TInfoNodo InfoNodo)
         {
-            Pos = new Vector2(50, 20);
+            Pos = new Vector2(0f, 0f);
             Color = Color.White * 0.8f;
-            Lines = new List<int>();
             Selected = false;
-            Drawable = false;
             RotAngle = 0f;
-        }
-        public void InitializeLines()
-        {
-            if (this is TInfoNodo)
-            {
-                for (int i = 0; i < (this as TInfoNodo).Ligações.Count; i++)
-                {
-                    Lines.Add((int)AppGraphics.DPrimitives.AddLine(
-                        Pos,
-                        Program.GetNodoFromLists((this as TInfoNodo).Ligações[i]).Pos,
-                        Color * 0.5f,
-                        Program.GetNodoFromLists((this as TInfoNodo).Ligações[i]).Color * 0.5f));
-                }
-            }
-        }
-        public void NewLine(int LigaçãoIndex)
-        {
-            if (this is TInfoNodo)
-            {
-                Lines.Add((int)AppGraphics.DPrimitives.AddLine(
-                    Pos,
-                    Program.GetNodoFromLists((this as TInfoNodo).Ligações[LigaçãoIndex]).Pos,
-                    Color * 0.5f,
-                    Program.GetNodoFromLists((this as TInfoNodo).Ligações[LigaçãoIndex]).Color * 0.5f));
-            }
-        }
-        public void ResetLines()
-        {
-            for (int i = 0; i < Lines.Count; i++)
-            {
-                AppGraphics.DPrimitives.SetDrawability(Lines[i], false);
-            }
-            Lines.Clear();
-        }
-        public void SetAllLinesDrawability(bool Drawable)
-        {
-            for (int i = 0; i < Lines.Count; i++)
-                AppGraphics.DPrimitives.SetDrawability(Lines[i], Drawable);
+            this.InfoNodo = InfoNodo;
         }
         public void MoveTo(Vector2 Pos)
         {
             this.Pos = Pos;
+            this.Speed = new Vector2(0f, 0f);
+            //this.FinalPos = new Vector2(0f, 0f);
         }
-        public void Update(GameTime gameTime)
+        public void AccelerateTo(Vector2 NewPos, float Alpha)
         {
-            // Verifica se está com o mouse em cima
-            if (!Rectangle.Intersect(
-                new Rectangle(
-                    (int)(this.Pos.X - (AppGraphics.DefaultNodeSize / 2)),
-                    (int)(this.Pos.Y - (AppGraphics.DefaultNodeSize / 2)),
-                    (int)(AppGraphics.DefaultNodeSize * 0.9f),
-                    (int)(AppGraphics.DefaultNodeSize * 0.9f)),
-                 new Rectangle(
-                     (int)AppGraphics.Camera.mousePos.X,
-                     (int)AppGraphics.Camera.mousePos.Y,
-                     1, 1
-                     )).IsEmpty)
-                MouseOver = true;
-            else
+            this.Speed = new Vector2((NewPos.X - Pos.X) / Alpha, (NewPos.Y - Pos.Y) / Alpha);
+            SpeedAlpha = Alpha;
+            this.FinalPos = NewPos;
+        }
+        public void Update(GameTime gameTime, bool UpdateMouse)
+        {
+            // Move o nodo, caso haja velocidade
+            if ((Math.Abs(Speed.X) > 0.01f) || (Math.Abs(Speed.Y) > 0.01f))
             {
-                MouseOver = false;
-                if (this is TInfoNodo)
-                    if (Program.NodoMouse == (this as TInfoNodo))
-                        Program.NodoMouse = null;
+                Pos += Speed;
+                Speed = new Vector2((FinalPos.X - Pos.X) / SpeedAlpha, (FinalPos.Y - Pos.Y) / SpeedAlpha);
             }
-            // Recalcula as linhas - se selecionado
+            MouseOver = false;
+            if (UpdateMouse)
+                // Verifica se está com o mouse em cima
+                if (!Rectangle.Intersect(
+                    new Rectangle(
+                        (int)(this.Pos.X - (AppGraphics.DefaultNodeSize / 2)),
+                        (int)(this.Pos.Y - (AppGraphics.DefaultNodeSize / 2)),
+                        (int)(AppGraphics.DefaultNodeSize * 0.9f),
+                        (int)(AppGraphics.DefaultNodeSize * 0.9f)),
+                     new Rectangle(
+                         (int)AppGraphics.Camera.mousePos.X,
+                         (int)AppGraphics.Camera.mousePos.Y,
+                         1, 1
+                         )).IsEmpty)
+                    MouseOver = true;
+                else
+                {
+                    MouseOver = false;
+                    if (Program.NodoMouse == this)
+                        Program.NodoMouse = null;
+                }
+            // Ãngulos
             if (Selected)
             {
-                for (int i = 0; i < Lines.Count; i++)
-                {
-                    AppGraphics.DPrimitives.Lines[Lines[i]].Point1 = Pos;
-                    AppGraphics.DPrimitives.Lines[Lines[i]].Color1 = Color * 0.1f;
-                    AppGraphics.DPrimitives.Lines[Lines[i]].Point2 =
-                        Program.GetNodoFromLists((this as TInfoNodo).Ligações[i]).Pos;
-                    AppGraphics.DPrimitives.Lines[Lines[i]].Color2 =
-                        Program.GetNodoFromLists((this as TInfoNodo).Ligações[i]).Color * 0.5f;
-                }
                 // Calcula os ângulos e cores
                 RotAngle += (float)gameTime.ElapsedGameTime.TotalSeconds * 2.56f;
             }
@@ -117,24 +87,24 @@ namespace VisualSort
         }
         public void Draw(SpriteBatch spriteBatch)
         {
-            if ((AppGraphics.Camera.isInCameraView(Pos)) && (Drawable))
+            if (AppGraphics.Camera.isInCameraView(Pos))
             {
                 if (MouseOver)
                     if (this.Selected)
-                        this.Color = Color.Green;
+                        this.Color = Color.GreenYellow;
                     else
                         this.Color = Color.Yellow;
                 else
                     if (this.Selected)
                         if (AppGraphics.MaxNodos[Program.maxNodoSelecionado].Loops > 0)
-                            this.Color = Color.White * (1 / AppGraphics.MaxNodos[Program.maxNodoSelecionado].Loops);
+                            this.Color = Color.White; //* (1 / AppGraphics.MaxNodos[Program.maxNodoSelecionado].Loops);
                         else
                             this.Color = Color.White;
                     else
-                        this.Color = Color.White;
+                        this.Color = Color.Azure;
                 Color cor = this.Color;
-                if (this.Selected)
-                    cor = Color.Green;
+            //    if (this.Selected)
+             //       cor = Color.Green;
                 // Desenha o nodo
                 spriteBatch.Draw(AppGraphics.NodoTex,
                     new Rectangle(
@@ -158,7 +128,7 @@ namespace VisualSort
                         cor,
                         RotAngle,
                         new Vector2(128, 128), SpriteEffects.None, 0f);
-                if ((this as TInfoNodo).MesmoNome("Krug", false))
+                if (InfoNodo.MesmoNome("Krug", false))
                 {
                     spriteBatch.Draw(AppGraphics.LoadingTexture[4],
                     new Rectangle(
@@ -170,34 +140,205 @@ namespace VisualSort
                     Color.White, 0f, new Vector2(0,0), SpriteEffects.None, 0f);
                 }
                 // Se o mouse estiver em cima, desenhar uma caixinha com o nome
-                if ((MouseOver) && (this is TInfoNodo))
+                if (MouseOver)
                 {
-                    Program.NodoMouse = (this as TInfoNodo);
+                    Program.NodoMouse = this;
                 }
             }
         }
     }
-
     // Definição de MaxNodo - um nodo constituído de outros nodos
     public class TDrawMaxNodo
     {
-        public TDrawNodo MainNodo;
-        public List<int> Ligações;
-        public int Loops;
-        public Vector2 Size;
-        public TDrawMaxNodo(TDrawNodo MainNodo)
+        public TInfoNodo MainNodo;      // Nodo central
+        public Vector2 Pos;             // Posição (em worldPos)
+        public List<TDrawNodo> Nodos;   // Todos os nodos desenhados nesse maxNodo (todos desenhados ao redor do central)
+                                        // Considera-se que todos nodos aqui estão ligados ao principal
+        public List<int> Ligações;      // Ligações com outros maxNodos
+        public int Loops;               // Número de loops
+        public Vector2 Size;            // Tamanho (em worldSize) 
+        public List<int> Lines;         // As linhas (com o ponteiro aqui para poderem ser movidas caso o elemento se mova)
+        public bool Drawable;           // Se pode desenhar
+        // Inicializador de um maxNodo, automaticamente colocando todos os nodos ligados
+        public TDrawMaxNodo(TPNodo Nodo, Vector2 Pos)
         {
-            this.MainNodo = MainNodo;
+            MainNodo = Program.GetNodoFromLists(Nodo);
             Ligações = new List<int>();
+            Nodos = new List<TDrawNodo>();
+            Lines = new List<int>();
             Loops = 0;
             Size = new Vector2(0, 0);
+            this.Pos = Pos;
+            Drawable = true;
         }
+        // Adiciona uma maxLigação
         public void AddLigaçãoCom(int Índice)
         {
             if (!Ligações.Contains(Índice))
                 Ligações.Add(Índice);
         }
+        // Esconde - não deleta da memória, mas deleta as primitivas e os nodos
+        public void Esconder()
+        {
+            foreach (int Lin in Lines)
+                AppGraphics.DPrimitives.Lines[Lin].Drawable = false;
+            Nodos.Clear();
+            Drawable = false;
+        }
+        // Ressurgir - quase igual a inicializar, mas algumas coisas já estão instanciadas
+        public void Ressurgir()
+        {
+            // Reinicializa o MainNodo para todos os Elementos a serem desenhados
+            MainNodo.DrawNodo = new TDrawNodo(MainNodo);
+            MainNodo.DrawNodo.MouseOver = false;
+            MainNodo.DrawNodo.Selected = true;
+            MainNodo.DrawNodo.MoveTo(Pos);
+            MainNodo.DrawNodo.Color = Color.White;
+
+            // Cria todos os drawnodos
+            Size = new Vector2(0, 0);
+            Loops = 0;
+
+            Vector2 NodeDisplace = new Vector2(82f, 0.0f);
+            float NodeAngleDisplace = 0f;
+            // Varre todos os nodos que tem ligação, colocando eles em lugares próprios de serem desenhados
+            for (int i = 0; i < MainNodo.Ligações.Count; i++)
+            {
+                TInfoNodo NodoL = Program.GetNodoFromLists(MainNodo.Ligações[i]);
+                NodoL.DrawNodo = new TDrawNodo(NodoL);
+                float cosRadians = (float)Math.Cos(NodeAngleDisplace);
+                float sinRadians = (float)Math.Sin(NodeAngleDisplace);
+                Vector2 NewPosDis = new Vector2(
+                        NodeDisplace.X * cosRadians - NodeDisplace.Y * sinRadians,
+                        NodeDisplace.X * sinRadians + NodeDisplace.Y * cosRadians);
+                NodoL.DrawNodo.MoveTo(Pos);
+                NodoL.DrawNodo.AccelerateTo(
+                    Pos + NewPosDis, 10f);
+                if (Vector2.Distance(NewPosDis, Pos) > Vector2.Distance(NewPosDis, Size))
+                    Size = NewPosDis;
+
+                NodeAngleDisplace += (float)(-Math.PI / (8/**/ * (Loops + 1)));
+                if (NodeAngleDisplace <= -(Math.PI))
+                {
+                    NodeDisplace += new Vector2(10f / (Loops + 1), 1f);//new Vector2(6f, 1f + ((Math.Min(50, Loops)) * (1.0f))); //* ((Math.Min(10, Loops)))));
+                }
+                if (NodeAngleDisplace < -(1.999 * Math.PI))
+                {
+                    //NodeDisplace += new Vector2(48f, 16f);
+                    NodeAngleDisplace = 0.0f;
+                    Loops++;
+                }
+                // Adiciona a linha
+                AppGraphics.DPrimitives.Lines[Lines[i]].Drawable = true;
+                // Adiciona o nodo na lista de nodos
+                Nodos.Add(NodoL.DrawNodo);
+            }
+        }
+        // Inicializa todos os nodos para desenhar e cria as linhas ligando todos
+        // Se chamado após um Esconde, Ressurgir será chamado
+        public void Inicializa()
+        {
+            if (!Drawable)
+            {
+                Ressurgir();
+                return;
+            }
+            Nodos.Clear();
+            Lines.Clear();
+            // Inicializa o DrawNodo para todos os Elementos a serem desenhados
+            // Cria o DrawNodo principal
+            MainNodo.DrawNodo = new TDrawNodo(MainNodo);
+            MainNodo.DrawNodo.MouseOver = false;
+            MainNodo.DrawNodo.Selected = true;
+            MainNodo.DrawNodo.MoveTo(Pos);
+            MainNodo.DrawNodo.Color = Color.White;
+
+            // Cria todos os drawnodos
+            Size = new Vector2(0, 0);
+            Loops = 0;
+
+            Vector2 NodeDisplace = new Vector2(82f, 0.0f);
+            float NodeAngleDisplace = 0f;
+            // Varre todos os nodos que tem ligação, colocando eles em lugares próprios de serem desenhados
+            for (int i = 0; i < MainNodo.Ligações.Count; i++)
+            {
+                TInfoNodo NodoL = Program.GetNodoFromLists(MainNodo.Ligações[i]);
+                NodoL.DrawNodo = new TDrawNodo(NodoL);
+                float cosRadians = (float)Math.Cos(NodeAngleDisplace);
+                float sinRadians = (float)Math.Sin(NodeAngleDisplace);
+                Vector2 NewPosDis = new Vector2(
+                        NodeDisplace.X * cosRadians - NodeDisplace.Y * sinRadians,
+                        NodeDisplace.X * sinRadians + NodeDisplace.Y * cosRadians);
+                NodoL.DrawNodo.MoveTo(Pos);
+                NodoL.DrawNodo.AccelerateTo(
+                    Pos + NewPosDis, 10f);
+                //if (Vector2.Distance(NewPosDis, Pos) > Vector2.Distance(NewPosDis, Size))
+
+                NodeAngleDisplace += (float)(-Math.PI / (8/**/ * (Loops + 1)));
+                if (NodeAngleDisplace <= -(Math.PI))
+                {
+                    NodeDisplace += new Vector2(10f / (Loops + 1), 1f);//new Vector2(6f, 1f + ((Math.Min(50, Loops)) * (1.0f))); //* ((Math.Min(10, Loops)))));
+                }
+                if (NodeAngleDisplace < -(1.999 * Math.PI))
+                {
+                    //NodeDisplace += new Vector2(48f, 16f);
+                    NodeAngleDisplace = 0.0f;
+                    Loops++;
+                }
+                Size = new Vector2((NewPosDis.Length()*2) + (AppGraphics.DefaultNodeSize),
+                    (NewPosDis.Length() * 2) + (AppGraphics.DefaultNodeSize));
+                // Adiciona a linha
+                Lines.Add((int)AppGraphics.DPrimitives.AddLine(
+                    Pos,
+                    NodoL.DrawNodo.Pos,
+                    MainNodo.DrawNodo.Color * 0.5f,
+                    NodoL.DrawNodo.Color * 0.5f));
+                // Adiciona o nodo na lista de nodos
+                Nodos.Add(NodoL.DrawNodo);
+            }
+        }
+        // Atualiza a posição das linhas
+        public void Update(GameTime gameTime, bool UpdateNodesMouse)
+        {
+            for (int i = 0; i < Lines.Count; i++)
+            {
+                AppGraphics.DPrimitives.Lines[Lines[i]].Point1 = Pos;
+                AppGraphics.DPrimitives.Lines[Lines[i]].Color1 = MainNodo.DrawNodo.Color * 0.1f;
+                AppGraphics.DPrimitives.Lines[Lines[i]].Point2 =
+                    Program.GetNodoFromLists(MainNodo.Ligações[i]).DrawNodo.Pos;
+                AppGraphics.DPrimitives.Lines[Lines[i]].Color2 =
+                    Program.GetNodoFromLists(MainNodo.Ligações[i]).DrawNodo.Color * 0.5f;
+            }
+            // Atualiza tudo
+            MainNodo.DrawNodo.Update(gameTime, UpdateNodesMouse);
+            foreach (TDrawNodo dNodo in Nodos)
+                dNodo.Update(gameTime, UpdateNodesMouse);
+        }
+        // Desenha todo o maxNodo
+        public void Draw(SpriteBatch spriteBatch)
+        {
+            // Desenha o nodo principal
+            
+            MainNodo.DrawNodo.Draw(spriteBatch);
+            // Todos os nodos
+            foreach (TDrawNodo dNodo in Nodos)
+            {
+                dNodo.Draw(spriteBatch);
+            }
+            // Desenha como nodo, dependendo do zoom
+            spriteBatch.Draw(AppGraphics.NodoTex,
+                new Rectangle(
+                    (int)(this.Pos.X),
+                    (int)(this.Pos.Y),
+                    (int)(Size.X),
+                    (int)(Size.Y)),
+                null,
+                Color.Azure * (float)(0.1 / AppGraphics.Camera.Zoom),
+                0,
+                new Vector2(AppGraphics.NodoTex.Width * 0.5f, AppGraphics.NodoTex.Height*0.5f), SpriteEffects.None, 0f);
+        }
     }
+
     // Câmera 2D - XY, Zoom e Rotação
     public class Camera2d
     {
@@ -398,6 +539,7 @@ namespace VisualSort
             //   if ((Lines[i].Point1 == point1) && (Lines[i].Point2 == point2))
             //     return i;
             Lines.Add(new DrawLine(point1, point2, Color1, Color2));
+            Lines[Lines.Count - 1].Drawable = true;
             return Lines.Count - 1;
         }
         public void SetDrawability(int Index, bool Drawable)
@@ -427,29 +569,50 @@ namespace VisualSort
 
         // Todos os MaxNodos sendo desenhados
         public static List<TDrawMaxNodo> MaxNodos;
+        public static List<TDrawNodo> DrawNodos;
 
         // Texturas
         public static Texture2D NodoTex;
         public static Texture2D[] LoadingTexture;
         public static Texture2D BoxTex;
-        public static SpriteFont TextFont;
 
         // O centro da tela
         public static Vector2 ScreenCenter;
 
-        // Seleciona um nodo - coloca-o no centro e faz todos os ligados serem desenhados
-        public static void SelecionaNodo(TPNodo Nodo, int iMaxNodo)
+        // Reseta a visualização
+        public static void ResetView()
         {
-            // Deseleciona último selecionado
-            if (Program.NodoSelecionado != null)
+            DrawNodos.Clear();
+            MaxNodos.Clear();
+            DPrimitives.Lines.Clear();
+        }
+        // Sleciona um nodo / maxNodo, dependendo do ViewMode
+        public static void SelecionaNodoComVoltar(TPNodo Nodo, int Anterior)
+        {
+            if (Anterior > -1)
+                if (MaxNodos[Anterior].MainNodo.Nodo == Nodo)
+                    return;
+            if (Anterior != -1)
             {
-                Program.NodoSelecionado.Drawable = false;
-                Program.NodoSelecionado.Selected = false;
-                Program.NodoSelecionado.SetAllLinesDrawability(false);
+                MaxNodos[Anterior].Esconder();
+                // Apaga todo os depois (apaga a linha seguinte de nodos)
+                for (int i = Anterior + 1; i < MaxNodos.Count; i++)
+                    MaxNodos.RemoveAt(Anterior+1);
             }
-
+            // Cria o novo na posição 0,0
+            AppGraphics.MaxNodos.Add(
+                new TDrawMaxNodo(Nodo, new Vector2(0, 0)));
+            // Inicializa
+            AppGraphics.MaxNodos[AppGraphics.MaxNodos.Count - 1].Inicializa();
+            // Olha
+            AppGraphics.Camera.LookAt(new Vector2(0, 0));
+            Program.MaxNodoSelecionado = AppGraphics.MaxNodos.Count - 1;
+        }
+        // Seleciona um nodo - coloca-o no centro e faz todos os ligados serem desenhados
+   /*     public static void SelecionaNodo(TPNodo Nodo, int iMaxNodo)
+        {
             Program.NodoSelecionado = Program.GetNodoFromLists(Nodo);
-            Vector2 NodeDisplace = new Vector2(82f, 0.0f);
+            
             Vector2 Farest;
             float NodeAngleDisplace = 0.0f;
 
@@ -495,6 +658,7 @@ namespace VisualSort
                 MaxNodos[iMaxNodo].Loops = 0;
                 Program.maxNodoSelecionado = iMaxNodo;
 
+                Vector2 NodeDisplace = new Vector2(82f, 0.0f);
                 // Varre todos os nodos que tem ligação, colocando eles em lugares próprios de serem desenhados
                 for (int i = 0; i < Program.NodoSelecionado.Ligações.Count; i++)
                 {
@@ -508,8 +672,8 @@ namespace VisualSort
                     if (Vector2.Distance(NodoL.Pos, Program.NodoSelecionado.Pos) > Vector2.Distance(Program.NodoSelecionado.Pos, Farest))
                         Farest = NodoL.Pos;
 
-                    NodeAngleDisplace += (float)(-Math.PI / (8/**/ * (MaxNodos[iMaxNodo].Loops +1)));
-                    if (NodeAngleDisplace <= -(Math.PI))
+                    NodeAngleDisplace += (float)(-Math.PI / (8/**/ //* (MaxNodos[iMaxNodo].Loops +1)));
+             /*       if (NodeAngleDisplace <= -(Math.PI))
                     {
                         NodeDisplace += new Vector2(10f / (MaxNodos[iMaxNodo].Loops + 1), 1f);//new Vector2(6f, 1f + ((Math.Min(50, Loops)) * (1.0f))); //* ((Math.Min(10, Loops)))));
                     }
@@ -527,6 +691,6 @@ namespace VisualSort
                 // Move Camera
                 Camera.LookAt(Program.NodoSelecionado.Pos);
             }
-        }
+        }*/
     }
 }

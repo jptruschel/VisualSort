@@ -91,8 +91,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="TextFont.spritefont">
-      <Name>TextFont</Name>
+    <Compile Include="TitleFont.spritefont">
+      <Name>TitleFont</Name>
       <Importer>FontDescriptionImporter</Importer>
       <Processor>FontDescriptionProcessor</Processor>
     </Compile>
@@ -118,18 +118,76 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HideBtn.png">
-      <Name>HideBtn</Name>
+    <Compile Include="ArrowBtn.png">
+      <Name>ArrowBtn</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>
-    <Compile Include="HideBtnClick.png">
-      <Name>HideBtnClick</Name>
+    <Compile Include="ArrowBtnClick.png">
+      <Name>ArrowBtnClick</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>
-    <Compile Include="HideBtnMouse.png">
-      <Name>HideBtnMouse</Name>
+    <Compile Include="ArrowBtnMouse.png">
+      <Name>ArrowBtnMouse</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="wbox.png">
+      <Name>wbox</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="TextFont.spritefont">
+      <Name>TextFont</Name>
+      <Importer>FontDescriptionImporter</Importer>
+      <Processor>FontDescriptionProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ListFont.spritefont">
+      <Name>ListFont</Name>
+      <Importer>FontDescriptionImporter</Importer>
+      <Processor>FontDescriptionProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Check.png">
+      <Name>Check</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <ProcessorParameters_GenerateMipmaps>True</ProcessorParameters_GenerateMipmaps>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BigTextFont.spritefont">
+      <Name>BigTextFont</Name>
+      <Importer>FontDescriptionImporter</Importer>
+      <Processor>FontDescriptionProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Nodo512.png">
+      <Name>Nodo512</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <ProcessorParameters_GenerateMipmaps>True</ProcessorParameters_GenerateMipmaps>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Arrow2.png">
+      <Name>Arrow2</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Line.png">
+      <Name>Line</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>

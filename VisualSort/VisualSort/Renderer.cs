@@ -32,7 +32,135 @@ namespace VisualSort
         int mouseTimer;
         float prevWheelValue;
         float currWheelValue;
+        // GUI
+        GUI MainGUI;
+        GUI.TGUIPanel LeftPanel, InfoPanel;
+        GUI.TGUIImgBtn LeftPanelHideButton1, LeftPanelHideButton2,
+            InfoPanelHideButton1, InfoPanelHideButton2, imgDivider1;
+        GUI.TGUIList LeftResultList;
 
+        // Retorna true se o Foco (mouse) está no Grafo (meio da tela)
+        public bool isFocusOnGraph()
+        {
+            return ((!LeftPanel.MouseOver || LeftPanel.Hidden) && (!InfoPanel.MouseOver || InfoPanel.Hidden));
+        }
+
+        // Funções de Clique da GUI
+        // HideButtons
+        public void InitializeHideButtons()
+        {
+            LeftPanelHideButton1.AutoSize = false;
+            LeftPanelHideButton1.backgroundColor = Color.White * 0;
+            LeftPanelHideButton1.BorderSize = 0;
+            LeftPanelHideButton1.Image = GUI.ArrowBtns[0];
+            LeftPanelHideButton1.HotImage = GUI.ArrowBtns[1];
+            LeftPanelHideButton1.ClickImage = GUI.ArrowBtns[2];
+            LeftPanelHideButton1.Size = new Vector2(GUI.ArrowBtns[0].Width * 0.36f, GUI.ArrowBtns[0].Height * 0.36f);
+            LeftPanelHideButton1.DrawImageResized = true;
+            LeftPanelHideButton1.spriteEffect = SpriteEffects.FlipHorizontally;
+            LeftPanelHideButton1.useImage = true;
+            LeftPanelHideButton1.useHotImage = true;
+            LeftPanelHideButton1.useClickImage = true;
+            LeftPanelHideButton1.OnClick = OnHideButtonLeft;
+            LeftPanelHideButton1.OnMouseEnter = OnHideButtonMouseEnterLeft;
+            LeftPanelHideButton1.OnMouseLeave = OnHideButtonMouseLeaveLeft;
+
+            InfoPanelHideButton1.AutoSize = false;
+            InfoPanelHideButton1.backgroundColor = Color.White * 0;
+            InfoPanelHideButton1.BorderSize = 0;
+            InfoPanelHideButton1.Image = GUI.ArrowBtns[0];
+            InfoPanelHideButton1.HotImage = GUI.ArrowBtns[1];
+            InfoPanelHideButton1.ClickImage = GUI.ArrowBtns[2];
+            InfoPanelHideButton1.Size = new Vector2(GUI.ArrowBtns[0].Width * 0.36f, GUI.ArrowBtns[0].Height * 0.36f);
+            InfoPanelHideButton1.DrawImageResized = true;
+            InfoPanelHideButton1.useImage = true;
+            InfoPanelHideButton1.useHotImage = true;
+            InfoPanelHideButton1.useClickImage = true;
+            InfoPanelHideButton1.OnClick = OnHideButtonInfo;
+            InfoPanelHideButton1.OnMouseEnter = OnHideButtonMouseEnterInfo;
+            InfoPanelHideButton1.OnMouseLeave = OnHideButtonMouseLeaveInfo;
+
+            LeftPanelHideButton2.AutoSize = false;
+            LeftPanelHideButton2.backgroundColor = Color.White * 0;
+            LeftPanelHideButton2.BorderSize = 0;
+            LeftPanelHideButton2.Image = GUI.ArrowBtns[0];
+            LeftPanelHideButton2.HotImage = GUI.ArrowBtns[1];
+            LeftPanelHideButton2.ClickImage = GUI.ArrowBtns[2];
+            LeftPanelHideButton2.Size = new Vector2(GUI.ArrowBtns[0].Width * 0.36f, GUI.ArrowBtns[0].Height * 0.36f);
+            LeftPanelHideButton2.DrawImageResized = true;
+            LeftPanelHideButton2.spriteEffect = SpriteEffects.FlipHorizontally;
+            LeftPanelHideButton2.useImage = true;
+            LeftPanelHideButton2.useHotImage = true;
+            LeftPanelHideButton2.useClickImage = true;
+            LeftPanelHideButton2.OnClick = OnHideButtonLeft;
+            LeftPanelHideButton2.OnMouseEnter = OnHideButtonMouseEnterLeft;
+            LeftPanelHideButton2.OnMouseLeave = OnHideButtonMouseLeaveLeft;
+
+            InfoPanelHideButton2.AutoSize = false;
+            InfoPanelHideButton2.backgroundColor = Color.White * 0;
+            InfoPanelHideButton2.BorderSize = 0;
+            InfoPanelHideButton2.Image = GUI.ArrowBtns[0];
+            InfoPanelHideButton2.HotImage = GUI.ArrowBtns[1];
+            InfoPanelHideButton2.ClickImage = GUI.ArrowBtns[2];
+            InfoPanelHideButton2.Size = new Vector2(GUI.ArrowBtns[0].Width * 0.36f, GUI.ArrowBtns[0].Height * 0.36f);
+            InfoPanelHideButton2.DrawImageResized = true;
+            InfoPanelHideButton2.useImage = true;
+            InfoPanelHideButton2.useHotImage = true;
+            InfoPanelHideButton2.useClickImage = true;
+            InfoPanelHideButton2.OnClick = OnHideButtonInfo;
+            InfoPanelHideButton2.OnMouseEnter = OnHideButtonMouseEnterInfo;
+            InfoPanelHideButton2.OnMouseLeave = OnHideButtonMouseLeaveInfo;
+        }
+        public bool OnHideButtonLeft()
+        {
+            if (LeftPanel.Hidden)
+            {
+                LeftPanel.Show(10f);
+            }
+            else
+            {
+                LeftPanel.Hide(new Vector2(-LeftPanel.Size.X + 26, 0), 8f);
+            }
+            return true;
+        }
+        public bool OnHideButtonInfo()
+        {
+            if (InfoPanel.Hidden)
+            {
+                InfoPanel.Show(10f);
+            }
+            else
+            {
+                InfoPanel.Hide(new Vector2(InfoPanel.Size.X - 26, 0), 8f);
+            }
+            return true;
+        }
+        public bool OnHideButtonMouseEnterLeft()
+        {
+            LeftPanelHideButton1.Highlighted = true;
+            LeftPanelHideButton2.Highlighted = true;
+            return true;
+        }
+        public bool OnHideButtonMouseEnterInfo()
+        {
+            InfoPanelHideButton1.Highlighted = true;
+            InfoPanelHideButton2.Highlighted = true;
+            return true;
+        }
+        public bool OnHideButtonMouseLeaveLeft()
+        {
+            LeftPanelHideButton1.Highlighted = false;
+            LeftPanelHideButton2.Highlighted = false;
+            return true;
+        }
+        public bool OnHideButtonMouseLeaveInfo()
+        {
+            InfoPanelHideButton1.Highlighted = false;
+            InfoPanelHideButton2.Highlighted = false;
+            return true;
+        }
+
+        // Inicializa o XNA
         public Renderer()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -46,48 +174,96 @@ namespace VisualSort
             graphics.ApplyChanges();
             Content.RootDirectory = "Content";
         }
-
-        /// <summary>
-        /// Allows the game to perform any initialization it needs to before starting to run.
-        /// This is where it can query for any required services and load any non-graphic
-        /// related content.  Calling base.Initialize will enumerate through any components
-        /// and initialize them as well.
-        /// </summary>
+        // Inicializa tudo necessário
         protected override void Initialize()
         {
             isLoading = true;
+
+            // Inicializa a entrada de input do teclado para Edits da GUI
+            EventInput.Initialize(this.Window);
             
+            // Inicializa a GUI
+            MainGUI = new GUI();
+
+            LeftPanel = MainGUI.NewPanel(
+                new Vector2(0, 0),
+                new Vector2(200,
+                    graphics.PreferredBackBufferHeight));
+            InfoPanel = MainGUI.NewPanel(
+                new Vector2(graphics.PreferredBackBufferWidth - (200), 0),
+                new Vector2(200, graphics.PreferredBackBufferHeight));
+            //LeftPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(50,300), new Vector2(100, 50), "Button1"));
+            //LeftPanel.AddComponent(new GUI.TGUILabel(new Vector2(50, 350), new Vector2(100, 50), "Label1"));
+            LeftResultList = LeftPanel.AddComponent(new GUI.TGUIList(new Vector2(50, 450), new Vector2(150, 400))) as GUI.TGUIList;
+            for (int i = 0; i < 500; i++)
+                (LeftResultList as GUI.TGUIList).Add("elemento " + i);
+            //LeftPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(50, 250), new Vector2(100, 50), "Checkbox1"));
+            LeftPanel.AddComponent(new GUI.TGUILabel(new Vector2(8, 5), new Vector2(100, 50), "Visual Sort")).Font = 0;
+            LeftPanelHideButton1 = (LeftPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(LeftPanel.Size.X - 12, 8), new Vector2(100, 50), "")) as GUI.TGUIImgBtn);
+            InfoPanelHideButton1 = (InfoPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(1, 8), new Vector2(100, 50), "")) as GUI.TGUIImgBtn);
+            LeftPanelHideButton2 = (LeftPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(LeftPanel.Size.X - 12, LeftPanel.Size.Y - 12), new Vector2(100, 50), "")) as GUI.TGUIImgBtn);
+            InfoPanelHideButton2 = (InfoPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(1, InfoPanel.Size.Y - 12), new Vector2(100, 50), "")) as GUI.TGUIImgBtn);
+            LeftPanel.AddComponent(new GUI.TGUIEditBox(new Vector2(50, 200), new Vector2(100,25), "Edit1"));
+            InfoPanel.Hide(new Vector2(InfoPanel.Size.X - 26, 0), 1f);
+            imgDivider1 = LeftPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(2, 42), new Vector2(LeftPanel.Size.X - 4, 8), "")) as GUI.TGUIImgBtn;
+            imgDivider1.ImageColor = Color.Black;
+            imgDivider1.BorderSize = 0;
+            imgDivider1.AutoSize = false;
+            imgDivider1.backgroundColor = Color.Black * 0f;
+            imgDivider1.DrawImageResized = true;
+
             // Inicializa o modo de visualização
             Program.ViewMode = 0;
+            // Inicializa as listas de nodos a serem desenhados
+            AppGraphics.DrawNodos = new List<TDrawNodo>();
             AppGraphics.MaxNodos = new List<TDrawMaxNodo>();
-            AppGraphics.MaxNodos.Add(new TDrawMaxNodo(null));
             Program.maxNodoSelecionado = 0;
-
+            
+            // Renderizador de primitivas
             AppGraphics.DPrimitives = new PrimitiveRenderer(GraphicsDevice);
 
+            // Calcula o centro da tela
             AppGraphics.ScreenCenter = new Vector2(graphics.PreferredBackBufferWidth * 0.5f, graphics.PreferredBackBufferHeight * 0.5f);
 
+            // Inicializa a Câmera
             AppGraphics.Camera = new Camera2d(graphics.GraphicsDevice);
             AppGraphics.Camera.Pos = new Vector2(0f, 0f);
 
+            // Estado do Mouse
             mouseState = new MouseState();
+
             base.Initialize();
             isLoading = false;
         }
 
-        /// <summary>
-        /// LoadContent will be called once per game and is the place to load
-        /// all of your content.
-        /// </summary>
+        // Carrega texturas, fontes, sons, etc
         protected override void LoadContent()
         {
             isLoading = true;
-
+  
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
+            // Carrega a GUI
+            GUI.ArrowBtns = new Texture2D[3];
+            GUI.ArrowBtns[0] = Content.Load<Texture2D>("ArrowBtn");
+            GUI.ArrowBtns[1] = Content.Load<Texture2D>("ArrowBtnMouse");
+            GUI.ArrowBtns[2] = Content.Load<Texture2D>("ArrowBtnClick");
+            GUI.Arrow2 = Content.Load<Texture2D>("Arrow2");
+            GUI.wBox = Content.Load<Texture2D>("wbox");
+            GUI.stLine = Content.Load<Texture2D>("Line");
+            GUI.CheckTex = Content.Load<Texture2D>("Check");
+            GUI.Fonts = new SpriteFont[4];
+            GUI.Fonts[0] = Content.Load<SpriteFont>("TitleFont");
+            GUI.Fonts[1] = Content.Load<SpriteFont>("TextFont");
+            GUI.Fonts[2] = Content.Load<SpriteFont>("ListFont");
+            GUI.Fonts[3] = Content.Load<SpriteFont>("BigTextFont");
+            InitializeHideButtons();
+            imgDivider1.Image = GUI.stLine;
+            imgDivider1.useImage = true;
+
             // Load the Sprites
-            AppGraphics.NodoTex = Content.Load<Texture2D>("Nodo");
+            AppGraphics.NodoTex = Content.Load<Texture2D>("Nodo512");
             AppGraphics.BoxTex = Content.Load<Texture2D>("box");
             // Initializes the Loading Circle
             AppGraphics.LoadingTexture = new Texture2D[5];
@@ -106,7 +282,6 @@ namespace VisualSort
 
             // Font
             DefaultFont = Content.Load<SpriteFont>("DefaultFont");
-            AppGraphics.TextFont = Content.Load<SpriteFont>("TextFont");
 
             // Carrega o XML
 
@@ -116,7 +291,7 @@ namespace VisualSort
           //  Program.mPessoas.NovoNodo(new TInfoNodo("Mara Abel", new BPos(0, 2)));
            // Program.GetNodoFromLists(new TPNodo(0, 0)).AdicionaLigaçãoCom(new TPNodo(1,0));
            // Program.GetNodoFromLists(new TPNodo(0, 0)).AdicionaLigaçãoCom(new TPNodo(2, 0));
-            for (int i = 1; i < 50; i++)
+            for (int i = 1; i < 500; i++)
             {
                 Program.mPessoas.NovoNodo(new TInfoNodo("n" + i, new BPos(0, 0)));
                 //Program.GetNodoFromLists(new TPNodo(0, 0)).AdicionaLigaçãoCom(new TPNodo(i, 0));
@@ -126,25 +301,16 @@ namespace VisualSort
                     Program.GetNodoFromLists(new TPNodo(i, 0)).AdicionaLigaçãoCom(new TPNodo(j, 0));
                 }
             }
-            AppGraphics.SelecionaNodo(new TPNodo(0, 0), 0);
-
+            AppGraphics.SelecionaNodoComVoltar(Program.mPessoas[0].Nodo, -1);
             isLoading = false;
         }
 
-        /// <summary>
-        /// UnloadContent will be called once per game and is the place to unload
-        /// all content.
-        /// </summary>
+        // Descarrega tudo - não necessário
         protected override void UnloadContent()
         {
-            // TODO: Unload any non ContentManager content here
         }
 
-        /// <summary>
-        /// Allows the game to run logic such as updating the world,
-        /// checking for collisions, gathering input, and playing audio.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
+        // Atualiza o programa (em uma taxa constante, invariável do fps)
         protected override void Update(GameTime gameTime)
         {
             // Allows the game to exit
@@ -160,93 +326,102 @@ namespace VisualSort
             mouseState = Mouse.GetState();
             prevWheelValue = currWheelValue;
             currWheelValue = mouseState.ScrollWheelValue;
-            AppGraphics.Camera.Zoom = AppGraphics.Camera.Zoom + (currWheelValue - prevWheelValue) * 0.001f * (AppGraphics.Camera.Zoom);
-            if (mouseState.RightButton == ButtonState.Pressed)
+            // Somente considera algo se o mouse não está em um dos panels (e ele não está escondido)
+            if (isFocusOnGraph())
             {
-                if (oldMouseState.RightButton == ButtonState.Pressed)
+                AppGraphics.Camera.Zoom = AppGraphics.Camera.Zoom + (currWheelValue - prevWheelValue) * 0.001f * (AppGraphics.Camera.Zoom);
+                if (mouseState.RightButton == ButtonState.Pressed)
                 {
-                    AppGraphics.Camera.Move(
-                        (new Vector2(
-                            oldMouseState.X,
-                            oldMouseState.Y) - 
-                         new Vector2(
-                             mouseState.X,
-                             mouseState.Y))
-                         * (1 / AppGraphics.Camera.Zoom));
+                    if (oldMouseState.RightButton == ButtonState.Pressed)
+                    {
+                        AppGraphics.Camera.Move(
+                            (new Vector2(
+                                oldMouseState.X,
+                                oldMouseState.Y) -
+                             new Vector2(
+                                 mouseState.X,
+                                 mouseState.Y))
+                             * (1 / AppGraphics.Camera.Zoom));
+                    }
+                }
+                // Double Click Timer
+                if (mouseState.LeftButton == ButtonState.Released)
+                {
+                    if (oldMouseState.LeftButton == ButtonState.Pressed)
+                    {
+                        mouseTimer = 0;
+                    }
+                }
+                // Verifica Double Click - seleciona, se houver
+                if (mouseState.LeftButton == ButtonState.Pressed)
+                {
+                    if (oldMouseState.LeftButton == ButtonState.Released)
+                        if (mouseTimer < 10f)
+                            if (Program.NodoMouse != null)
+                                if (Program.NodoMouse.MouseOver == true)
+                                {
+                                    AppGraphics.SelecionaNodoComVoltar(Program.NodoMouse.InfoNodo.Nodo, Program.MaxNodoSelecionado);
+                                }
+                }
+                if (mouseTimer < 15)
+                    mouseTimer++;
+                // Move camera
+                keyboardState = Keyboard.GetState();
+                if (keyboardState.IsKeyDown(Keys.Left))
+                {
+                    if (keyboardState.IsKeyDown(Keys.LeftShift))
+                        AppGraphics.Camera.Rotation += 0.02f;
+                    else
+                    {
+                        AppGraphics.Camera.Move(
+                            new Vector2(
+                                -1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Cos(AppGraphics.Camera.Rotation)),
+                                1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Sin(AppGraphics.Camera.Rotation))));
+                    }
+                }
+                if (keyboardState.IsKeyDown(Keys.Right))
+                {
+                    if (keyboardState.IsKeyDown(Keys.LeftShift))
+                        AppGraphics.Camera.Rotation -= 0.02f;
+                    else
+                    {
+                        AppGraphics.Camera.Move(
+                            new Vector2(
+                                1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Cos(AppGraphics.Camera.Rotation)),
+                                -1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Sin(AppGraphics.Camera.Rotation))));
+                    }
+                }
+                if (keyboardState.IsKeyDown(Keys.Up))
+                {
+                    if (keyboardState.IsKeyDown(Keys.LeftShift))
+                        AppGraphics.Camera.Zoom += 0.01f;
+                    else
+                    {
+                        AppGraphics.Camera.Move(
+                            new Vector2(
+                                -1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Sin(AppGraphics.Camera.Rotation)),
+                                -1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Cos(AppGraphics.Camera.Rotation))));
+                    }
+                }
+                if (keyboardState.IsKeyDown(Keys.Down))
+                {
+                    if (keyboardState.IsKeyDown(Keys.LeftShift))
+                        AppGraphics.Camera.Zoom -= 0.01f;
+                    else
+                    {
+                        AppGraphics.Camera.Move(
+                            new Vector2(
+                                1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Sin(AppGraphics.Camera.Rotation)),
+                                1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Cos(AppGraphics.Camera.Rotation))));
+                    }
                 }
             }
-            // Double Click Timer
-            if (mouseState.LeftButton == ButtonState.Released)
-            {
-                if (oldMouseState.LeftButton == ButtonState.Pressed)
-                {
-                    mouseTimer = 0;
-                }
-            }
-            // Verifica Double Click - seleciona, se houver
-            if (mouseState.LeftButton == ButtonState.Pressed)
-            {
-                if (oldMouseState.LeftButton == ButtonState.Released)
-                    if (mouseTimer < 10f)
-                        if (Program.NodoMouse != null)
-                            if (Program.NodoMouse.MouseOver == true)
-                                AppGraphics.SelecionaNodo(Program.NodoMouse.Nodo, 0);
-            }
-            if (mouseTimer < 15)
-                mouseTimer++;
             oldMouseState = mouseState;
-            // Move camera
-            keyboardState = Keyboard.GetState();
-            if (keyboardState.IsKeyDown(Keys.Left))
-            {
-                if (keyboardState.IsKeyDown(Keys.LeftShift))
-                    AppGraphics.Camera.Rotation += 0.02f;
-                else
-                {
-                    AppGraphics.Camera.Move(
-                        new Vector2(
-                            -1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Cos(AppGraphics.Camera.Rotation)),
-                            1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Sin(AppGraphics.Camera.Rotation))));
-                }
-            }
-            if (keyboardState.IsKeyDown(Keys.Right))
-            {
-                if (keyboardState.IsKeyDown(Keys.LeftShift))
-                    AppGraphics.Camera.Rotation -= 0.02f;
-                else
-                {
-                    AppGraphics.Camera.Move(
-                        new Vector2(
-                            1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Cos(AppGraphics.Camera.Rotation)),
-                            -1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Sin(AppGraphics.Camera.Rotation))));
-                }
-            }
-            if (keyboardState.IsKeyDown(Keys.Up))
-            {
-                if (keyboardState.IsKeyDown(Keys.LeftShift))
-                    AppGraphics.Camera.Zoom += 0.01f;
-                else
-                {
-                    AppGraphics.Camera.Move(
-                        new Vector2(
-                            -1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Sin(AppGraphics.Camera.Rotation)),
-                            -1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Cos(AppGraphics.Camera.Rotation))));
-                }
-            }
-            if (keyboardState.IsKeyDown(Keys.Down))
-            {
-                if (keyboardState.IsKeyDown(Keys.LeftShift))
-                    AppGraphics.Camera.Zoom -= 0.01f;
-                else
-                {
-                    AppGraphics.Camera.Move(
-                        new Vector2(
-                            1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Sin(AppGraphics.Camera.Rotation)),
-                            1.0f * (10 / AppGraphics.Camera.Zoom) * (float)(Math.Cos(AppGraphics.Camera.Rotation))));
-                }
-            }
             oldKeyboardState = keyboardState;
-            //Graph.Camera.Rotation += 0.01f;
+
+            // Update GUI
+            LeftPanel.Update(mouseState);
+            InfoPanel.Update(mouseState);
 
             // Update Camer Info (mouse and limits)
             AppGraphics.Camera.UpdateCameraInfo(mouseState);
@@ -254,10 +429,7 @@ namespace VisualSort
             base.Update(gameTime);
         }
 
-        /// <summary>
-        /// This is called when the game should draw itself.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
+        // Desenha tudo que deve ser desenhado na tela a cada frame. Tenta ser constante a 60fps
         protected override void Draw(GameTime gameTime)
         {
             //GraphicsDevice.Clear(new Color(10, 35, 114));//Color.DarkSlateGray);
@@ -292,31 +464,14 @@ namespace VisualSort
             // Draws all the node connections
             AppGraphics.DPrimitives.Draw();
 
-            // Draws all the nodes
-            foreach(TInfoNodo nodo in Program.mPessoas.ProcuraNodo(true))
+            // Desenha todos os maxNodos
+            foreach (TDrawMaxNodo dMaxNodo in AppGraphics.MaxNodos)
             {
-                nodo.Update(gameTime);
-                nodo.Draw(spriteBatch);
-            }
-            foreach (TInfoNodo nodo in Program.mProduções.ProcuraNodo(true))
-            {
-                nodo.Update(gameTime);
-                nodo.Draw(spriteBatch);
-            }
-            foreach (TInfoNodo nodo in Program.mInstituições.ProcuraNodo(true))
-            {
-                nodo.Update(gameTime);
-                nodo.Draw(spriteBatch);
-            }
-            foreach (TInfoNodo nodo in Program.mPeridódicos.ProcuraNodo(true))
-            {
-                nodo.Update(gameTime);
-                nodo.Draw(spriteBatch);
-            }
-            foreach (TInfoNodo nodo in Program.mConferências.ProcuraNodo(true))
-            {
-                nodo.Update(gameTime);
-                nodo.Draw(spriteBatch);
+                if (dMaxNodo.Drawable)
+                {
+                    dMaxNodo.Update(gameTime, isFocusOnGraph());
+                    dMaxNodo.Draw(spriteBatch);
+                }
             }
 
             spriteBatch.End();
@@ -328,7 +483,7 @@ namespace VisualSort
             if ((Program.NodoMouse != null) && (Program.NodoMouse.MouseOver == true))
             {
                 Vector2 DPos = Vector2.Transform(Program.NodoMouse.Pos, AppGraphics.Camera.get_transformation());
-                Vector2 NameSize = AppGraphics.TextFont.MeasureString(Program.NodoMouse.Nome);
+                Vector2 NameSize = GUI.Fonts[3].MeasureString(Program.NodoMouse.InfoNodo.Nome);
                 DPos.X += (AppGraphics.DefaultNodeSize*0.5f * AppGraphics.Camera.Zoom);
                 DPos.Y -= NameSize.Y * 0.5f;
                 spriteBatch.Draw(AppGraphics.BoxTex,
@@ -339,12 +494,17 @@ namespace VisualSort
                         (int)(NameSize.Y)),
                     null,
                     Color.White, 0, new Vector2(0, 0), SpriteEffects.None, 0f);
-                spriteBatch.DrawString(AppGraphics.TextFont, Program.NodoMouse.Nome, DPos, Color.White);
+                spriteBatch.DrawString(GUI.Fonts[3], Program.NodoMouse.InfoNodo.Nome, DPos, Color.White);
             }
+
+            // Desenha a GUI
+            LeftPanel.Draw(spriteBatch);
+            InfoPanel.Draw(spriteBatch);
+
             // Draws the FPS
-            spriteBatch.DrawString(DefaultFont, "FPS: " + (int)(1 / (float)gameTime.ElapsedGameTime.TotalSeconds), new Vector2(0f, 0f), Color.White);
-            spriteBatch.DrawString(DefaultFont, "Camera: X=" + AppGraphics.Camera.Pos.X.ToString() + " Y=" + AppGraphics.Camera.Pos.Y.ToString() + " Z=" + AppGraphics.Camera.Zoom.ToString() + " R=" + AppGraphics.Camera.Rotation.ToString(), new Vector2(00f, 20f), Color.White);
-            spriteBatch.DrawString(DefaultFont, "Mouse: X=" + AppGraphics.Camera.mousePos.X.ToString() + " Y=" + AppGraphics.Camera.mousePos.Y.ToString(), new Vector2(00f, 40f), Color.White);
+            spriteBatch.DrawString(DefaultFont, "FPS: " + (int)(1 / (float)gameTime.ElapsedGameTime.TotalSeconds), new Vector2(LeftPanel.Pos.X + LeftPanel.Size.X + 2, 0f), Color.White);
+            spriteBatch.DrawString(DefaultFont, "Camera: X=" + AppGraphics.Camera.Pos.X.ToString() + " Y=" + AppGraphics.Camera.Pos.Y.ToString() + " Z=" + AppGraphics.Camera.Zoom.ToString() + " R=" + AppGraphics.Camera.Rotation.ToString(), new Vector2(LeftPanel.Pos.X + LeftPanel.Size.X + 2, 20f), Color.White);
+            spriteBatch.DrawString(DefaultFont, "Mouse: X=" + AppGraphics.Camera.mousePos.X.ToString() + " Y=" + AppGraphics.Camera.mousePos.Y.ToString() + " l:" + AppGraphics.DPrimitives.Lines.Count, new Vector2(LeftPanel.Pos.X + LeftPanel.Size.X + 2, 40f), Color.White);
             spriteBatch.End();
 
             base.Draw(gameTime);

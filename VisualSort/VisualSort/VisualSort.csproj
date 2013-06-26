@@ -123,6 +123,8 @@
   <ItemGroup>
     <Compile Include="AppGraphics.cs" />
     <Compile Include="Definitions.cs" />
+    <Compile Include="GUI.cs" />
+    <Compile Include="KeyboardIn.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Renderer.cs" />
