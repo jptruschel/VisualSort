@@ -58,8 +58,8 @@ namespace VisualSort
                 // Verifica se está com o mouse em cima
                 if (!Rectangle.Intersect(
                     new Rectangle(
-                        (int)(this.Pos.X - (AppGraphics.DefaultNodeSize / 2)),
-                        (int)(this.Pos.Y - (AppGraphics.DefaultNodeSize / 2)),
+                        (int)(this.Pos.X - (AppGraphics.DefaultNodeSize * 0.4f)),
+                        (int)(this.Pos.Y - (AppGraphics.DefaultNodeSize * 0.4f)),
                         (int)(AppGraphics.DefaultNodeSize * 0.9f),
                         (int)(AppGraphics.DefaultNodeSize * 0.9f)),
                      new Rectangle(

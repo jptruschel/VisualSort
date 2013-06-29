@@ -20,18 +20,23 @@ namespace VisualSort
         /// </summary>
 
         /* BLOCOS DE DADOS SALVOS NO DISCO */
-        public static TBlocoPessoas fPessoas = new TBlocoPessoas();
-        public static TBlocoPeriódicos fPeriódicos = new TBlocoPeriódicos();
-        public static TBlocoConferências fConferências = new TBlocoConferências();
-        public static TBlocoInstituições fInstituições = new TBlocoInstituições();
-        public static TBlocoProduções fProduções = new TBlocoProduções();
+        public static TBlocoPessoasHandler fPessoas = new TBlocoPessoasHandler();
+        public static TBlocoArtigosHandler fArtigos = new TBlocoArtigosHandler();
+        public static TBlocoLivrosHandler fLivros = new TBlocoLivrosHandler();
+        public static TBlocoPeriódicosHandler fPeridódicos = new TBlocoPeriódicosHandler();
+        public static TBlocoCapítulosHandler fCapítulos = new TBlocoCapítulosHandler();
+        public static TBlocoConferênciasHandler fConferências = new TBlocoConferênciasHandler();
+        public static TBlocoInstituiçõesHandler fInstituições = new TBlocoInstituiçõesHandler();
         /* LISTAS DE TODOS OS DADOS UTILIZADOS (listas-mestre) */
         public static TBigList mPessoas = new TBigList(0);
-        public static TBigList mPeridódicos = new TBigList(1);
-        public static TBigList mConferências = new TBigList(2);
-        public static TBigList mProduções = new TBigList(3);
-        public static TBigList mInstituições = new TBigList(4);
+        public static TBigList mArtigos = new TBigList(1);
+        public static TBigList mLivros = new TBigList(2);
+        public static TBigList mPeridódicos = new TBigList(3);
+        public static TBigList mCapítulos = new TBigList(4);
+        public static TBigList mConferências = new TBigList(5);
+        public static TBigList mInstituições = new TBigList(6);
         // Retorna o Nodo, dado um Ponteiro para Nodo
+        // Tipo (0= Pessoa; 1= Artigo; 2= Livro; 3= Periódico; 4= Capítulo; 5= Conferência; 6= Instituição)
         public static TInfoNodo GetNodoFromLists(TPNodo Nodo)
         {
             switch (Nodo.Tipo)
@@ -39,12 +44,16 @@ namespace VisualSort
                 case 0:
                     return Program.mPessoas[(int)Nodo.Índice];
                 case 1:
-                    return Program.mPeridódicos[(int)Nodo.Índice];
+                    return Program.mArtigos[(int)Nodo.Índice];
                 case 2:
-                    return Program.mConferências[(int)Nodo.Índice];
+                    return Program.mLivros[(int)Nodo.Índice];
                 case 3:
-                    return Program.mProduções[(int)Nodo.Índice];
+                    return Program.mPeridódicos[(int)Nodo.Índice];
                 case 4:
+                    return Program.mCapítulos[(int)Nodo.Índice];
+                case 5:
+                    return Program.mConferências[(int)Nodo.Índice];
+                case 6:
                     return Program.mInstituições[(int)Nodo.Índice];
                 default:
                     return null;
@@ -52,12 +61,10 @@ namespace VisualSort
         }
 
         /// O modo de Visualização Selecionado
-        ///   0= Nodo (MaxNodoSelecionad: desenhado; Voltar/Avançar)
-        ///   1= Pessoas
-        ///   2= Periódicos
-        ///   3= Conferências
-        ///   4= Produção (usando MaxNodos[Artigos.Count])
-        ///   5= Instituições (usando MaxNodos[Ins.Count])
+        ///   0= Nodo (MaxNodoSelecionado: desenhado; Voltar/Avançar)
+        ///   1= MaxNodos (MaxNodos criados pela pesquisa; Cada MaxNodo representa
+        ///                 um elemento da pesquisa, onde, com mais zoom, é possível
+        ///                 se ver as ligações internas (drawnodos com infonodos repetidos)
         /// Por default = 0;
         public static int ViewMode = 0;
         public static int maxNodoSelecionado = 0;
@@ -70,6 +77,25 @@ namespace VisualSort
 
         static void Main(string[] args)
         {
+            // Inicializa
+            fPessoas.InicializaGravação();
+            fArtigos.InicializaGravação();
+            fLivros.InicializaGravação();
+            fPeridódicos.InicializaGravação();
+            fCapítulos.InicializaGravação();
+            fConferências.InicializaGravação();
+            fInstituições.InicializaGravação();
+            CSVBIZU.ConferenciasCSV();
+            CSVBIZU.PeriodicosCSV();
+            XMLBIZU.ReadFromXML("C:\\Users\\João Paulo T Ruschel\\Documents\\Visual Studio 2010\\Projects\\VisualSort\\VisualSort\\Tabelas\\krug.xml");
+            fPessoas.FinalizaGravação();
+            fArtigos.FinalizaGravação();
+            fLivros.FinalizaGravação();
+            fPeridódicos.FinalizaGravação();
+            fCapítulos.FinalizaGravação();
+            fConferências.FinalizaGravação();
+            fInstituições.FinalizaGravação();
+
             using (Renderer game = new Renderer())
             {
                 game.IsMouseVisible = true;
