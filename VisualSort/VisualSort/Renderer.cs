@@ -30,6 +30,7 @@ namespace VisualSort
         KeyboardState oldKeyboardState;
         MouseState mouseState, oldMouseState;
         int mouseTimer;
+        bool mouseTimerClicked;
         float prevWheelValue;
         float currWheelValue;
         // GUI
@@ -37,19 +38,21 @@ namespace VisualSort
         public static GUI.TGUIPanel LeftPanel, RightPanel, FilterPanel;
         GUI.TGUIImgBtn LeftPanelHideButton1, LeftPanelHideButton2,
             InfoPanelHideButton1, InfoPanelHideButton2, imgDivider1,
-            LeftSearchButton;
+            LeftSearchButton, LeftSeachButtonGraphar;
         public static GUI.TGUIImgBtn FilterButton;
         GUI.TGUICheckBox[] FilterCheckBoxs;
         GUI.TGUIList LeftResultList;
         GUI.TGUIEditBox LeftSearchEdit;
-        GUI.TGUICheckBox LeftSearchCheckBoxExato, LeftSearchCheckBoxShowOnGraph;
+        public static GUI.TGUICheckBox LeftSearchCheckBoxExato, LeftSearchCheckBoxShowOnGraph;
+        public static List<TInfoNodo> SearchResults;
 
         // Retorna true se o Foco (mouse) está no Grafo (meio da tela)
         public bool isFocusOnGraph()
         {
             return ((!LeftPanel.MouseOver || LeftPanel.Hidden) && 
                 (!RightPanel.MouseOver || RightPanel.Hidden) &&
-                (!LeftSearchEdit.hasFocus) && (!LeftSearchEdit.mouseOver));
+                (!LeftSearchEdit.hasFocus) && (!LeftSearchEdit.mouseOver) &&
+                (LeftResultList.xOffsetTextSize == 0));
         }
 
         // Funções de Clique da GUI
@@ -118,7 +121,7 @@ namespace VisualSort
             InfoPanelHideButton2.OnMouseEnter = OnHideButtonMouseEnterInfo;
             InfoPanelHideButton2.OnMouseLeave = OnHideButtonMouseLeaveInfo;
         }
-        public bool OnHideButtonLeft()
+        public bool OnHideButtonLeft(int Tag)
         {
             if (LeftPanel.Hidden)
             {
@@ -130,7 +133,7 @@ namespace VisualSort
             }
             return true;
         }
-        public bool OnHideButtonInfo()
+        public bool OnHideButtonInfo(int Tag)
         {
             if (RightPanel.Hidden)
             {
@@ -142,37 +145,75 @@ namespace VisualSort
             }
             return true;
         }
-        public bool OnHideButtonMouseEnterLeft()
+        public bool OnHideButtonMouseEnterLeft(int Tag)
         {
             LeftPanelHideButton1.Highlighted = true;
             LeftPanelHideButton2.Highlighted = true;
             return true;
         }
-        public bool OnHideButtonMouseEnterInfo()
+        public bool OnHideButtonMouseEnterInfo(int Tag)
         {
             InfoPanelHideButton1.Highlighted = true;
             InfoPanelHideButton2.Highlighted = true;
             return true;
         }
-        public bool OnHideButtonMouseLeaveLeft()
+        public bool OnHideButtonMouseLeaveLeft(int Tag)
         {
             LeftPanelHideButton1.Highlighted = false;
             LeftPanelHideButton2.Highlighted = false;
             return true;
         }
-        public bool OnHideButtonMouseLeaveInfo()
+        public bool OnHideButtonMouseLeaveInfo(int Tag)
         {
             InfoPanelHideButton1.Highlighted = false;
             InfoPanelHideButton2.Highlighted = false;
             return true;
         }
         // Botão de procura
-        public bool SearchButtonOnClick()
+        public bool SearchButtonOnClick(int Tag)
         {
+            foreach (TInfoNodo aNodo in SearchResults)
+                aNodo.Pesquisado = false;
+            LeftResultList.Items.Clear();
+            LeftSearchCheckBoxShowOnGraph.Enabled = (SearchResults.Count > 0);
+            LeftSeachButtonGraphar.Enabled = (SearchResults.Count > 0);
+            isLoading = true;
+            LeftResultList.ItemIndex = -1;
+            SearchResults.Clear();
+            // Pesquisa o que deve ser pesquisado, na ordem
+            for (int Tip = 0; Tip < 7; Tip++)
+            {
+                if (FilterCheckBoxs[Tip].Checked)
+                {
+                    foreach (TInfoNodo nNodo in Program.mListas[Tip].ProcuraNodo(LeftSearchEdit.Text, LeftSearchCheckBoxExato.Checked))
+                    {
+                        SearchResults.Add(nNodo);
+                        nNodo.Pesquisado = true;
+                    }
+                }
+            }
+            // Listar
+            foreach (TInfoNodo nNodo in SearchResults)
+            {
+                LeftResultList.Items.Add(nNodo.Nome + " (" + nNodo.Nodo.Tipo.ToString() + ")");
+            }
+            LeftSearchCheckBoxShowOnGraph.Enabled = (SearchResults.Count > 0);
+            LeftSeachButtonGraphar.Enabled = (SearchResults.Count > 0);
+            isLoading = false;
+            return true;
+        }
+        // Clicar na lista
+        public bool SearchResultsListOnClick(int arg)
+        {
+            if (arg != -1)
+            {
+                AppGraphics.SelecionaNodoComVoltar(SearchResults[arg].Nodo, MouseNodeHandler.MaxNodoSelecionado);
+                MouseNodeHandler.UnMouseOver();
+            }
             return true;
         }
         // Mostrar/esconder panel de filtros
-        public static bool ToggleFilterPanel()
+        public static bool ToggleFilterPanel(int Tag)
         {
             if (FilterPanel.Visible)
             {
@@ -193,8 +234,8 @@ namespace VisualSort
         {
             graphics = new GraphicsDeviceManager(this);
             // Deixemos assim até que coloquemos full screen com toda a parte de resolução certinho
-            graphics.PreferredBackBufferWidth = 1280;
-            graphics.PreferredBackBufferHeight = 720;
+            //graphics.PreferredBackBufferWidth = 1920;
+            //graphics.PreferredBackBufferHeight = 1080;
             graphics.PreferredBackBufferWidth = 1600;
             graphics.PreferredBackBufferHeight = 900;
             //graphics.IsFullScreen = true;
@@ -207,6 +248,17 @@ namespace VisualSort
         {
             isLoading = true;
 
+            // Listas
+            Program.mListas = new TBigList[7];
+            Program.mListas[0] = Program.mPessoas;
+            Program.mListas[1] = Program.mArtigos;
+            Program.mListas[2] = Program.mLivros;
+            Program.mListas[3] = Program.mPeridódicos;
+            Program.mListas[4] = Program.mCapítulos;
+            Program.mListas[5] = Program.mConferências;
+            Program.mListas[6] = Program.mInstituições;
+            SearchResults = new List<TInfoNodo>();
+
             // Inicializa a entrada de input do teclado para Edits da GUI
             EventInput.Initialize(this.Window);
             
@@ -215,22 +267,25 @@ namespace VisualSort
 
             LeftPanel = MainGUI.NewPanel(
                 new Vector2(0, 0),
-                new Vector2(200,
+                new Vector2(250,
                     graphics.PreferredBackBufferHeight));
             RightPanel = MainGUI.NewPanel(
                 new Vector2(graphics.PreferredBackBufferWidth - (200), 0),
                 new Vector2(200, graphics.PreferredBackBufferHeight));
             
-            LeftResultList = LeftPanel.AddComponent(new GUI.TGUIList(new Vector2(10, 312), new Vector2(LeftPanel.Size.X - 15, 547))) as GUI.TGUIList;
-            LeftSearchEdit = LeftPanel.AddComponent(new GUI.TGUIEditBox(new Vector2(5, 250), new Vector2(LeftPanel.Size.X - 10, 25), "Pesquisar")) as GUI.TGUIEditBox;
-            LeftSearchButton = LeftPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(LeftPanel.Size.X - 115, 279), new Vector2(LeftPanel.Size.X - 10, 25), " Pesquisar")) as GUI.TGUIImgBtn;
+            // LeftPanel
+            LeftResultList = LeftPanel.AddComponent(new GUI.TGUIList(new Vector2(10, 312), new Vector2(LeftPanel.Size.X - 15, LeftPanel.Size.Y-353/*547*/))) as GUI.TGUIList;
+            LeftResultList.Font = 5;
+            LeftResultList.OnClick = SearchResultsListOnClick;
+            LeftSearchEdit = LeftPanel.AddComponent(new GUI.TGUIEditBox(new Vector2(5, 250), new Vector2(LeftPanel.Size.X - 10, 25), "Termos da pesquisa")) as GUI.TGUIEditBox;
+            LeftSearchButton = LeftPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(LeftPanel.Size.X - 115, 279), new Vector2(LeftPanel.Size.X - 10, 25), " Pesquisar!")) as GUI.TGUIImgBtn;
             LeftSearchButton.BorderSize = 1;
             LeftSearchButton.AutoSize = false;
             LeftSearchButton.Size = new Vector2(110, 22);
             LeftSearchButton.Font = 4;
             LeftSearchButton.OnClick = SearchButtonOnClick;
             LeftSearchButton.backgroundColor = Color.GreenYellow;
-            FilterButton = LeftPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(5, 279), new Vector2(0, 0), "Filtros  v ")) as GUI.TGUIImgBtn;
+            FilterButton = LeftPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(5, 279), new Vector2(0, 0), "Filtros  | ")) as GUI.TGUIImgBtn;
             FilterButton.BorderSize = 1;
             FilterButton.backgroundColor = Color.OrangeRed * 0.86f;
             FilterButton.OnClick = ToggleFilterPanel;
@@ -249,29 +304,37 @@ namespace VisualSort
             imgDivider1.DrawImageResized = true;
             FilterPanel = MainGUI.NewPanel(
                 new Vector2(5, 305) + new Vector2(FilterButton.Size.X, 0),
-                new Vector2(125, 205));
+                new Vector2(125, 183));
             FilterPanel.Visible = false;
             FilterPanel.color = Color.IndianRed;
             FilterPanel.backgroundAlpha = 0.99f;
-            FilterCheckBoxs = new GUI.TGUICheckBox[8];
+            FilterCheckBoxs = new GUI.TGUICheckBox[7];
             FilterCheckBoxs[0] = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 0), Vector2.Zero, "Pessoas")) as GUI.TGUICheckBox;
             FilterCheckBoxs[1] = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 22), Vector2.Zero, "Artigos")) as GUI.TGUICheckBox;
             FilterCheckBoxs[2] = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 44), Vector2.Zero, "Livros")) as GUI.TGUICheckBox;
-            FilterCheckBoxs[3] = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 66), Vector2.Zero, "Capitulos")) as GUI.TGUICheckBox;
-            FilterCheckBoxs[4] = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 88), Vector2.Zero, "Producoes")) as GUI.TGUICheckBox;
-            FilterCheckBoxs[5] = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 110), Vector2.Zero, "Periodicos")) as GUI.TGUICheckBox;
-            FilterCheckBoxs[6] = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 132), Vector2.Zero, "Conferencias")) as GUI.TGUICheckBox;
-            FilterCheckBoxs[7] = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 154), Vector2.Zero, "Instituicoes")) as GUI.TGUICheckBox;
-            for (int i = 0; i < 8; i++)
+            FilterCheckBoxs[3] = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 66), Vector2.Zero, "Periódicos")) as GUI.TGUICheckBox;
+            FilterCheckBoxs[4] = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 88), Vector2.Zero, "Capítulos")) as GUI.TGUICheckBox;
+            FilterCheckBoxs[5] = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 110), Vector2.Zero, "Conferências")) as GUI.TGUICheckBox;
+            FilterCheckBoxs[6] = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 132), Vector2.Zero, "Instituições")) as GUI.TGUICheckBox;
+            for (int i = 0; i < 7; i++)
                 FilterCheckBoxs[i].Checked = true;
-            LeftSearchCheckBoxExato = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 182), new Vector2(LeftPanel.Size.X - 10, 25), "Busca exata")) as GUI.TGUICheckBox;
+            LeftSearchCheckBoxExato = FilterPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(2, 160), new Vector2(LeftPanel.Size.X - 10, 25), "Busca exata")) as GUI.TGUICheckBox;
             LeftSearchCheckBoxExato.Font = 1;
             LeftSearchCheckBoxExato.TextColor = Color.Black;
-            LeftSearchCheckBoxExato.Checked = true;
-            LeftSearchCheckBoxShowOnGraph = LeftPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(5, LeftResultList.Pos.Y + LeftResultList.Size.Y + 3), new Vector2(0, 0), "Mostrar todos no Grafo")) as GUI.TGUICheckBox;
+            LeftSearchCheckBoxExato.Checked = false;
+            LeftSearchCheckBoxShowOnGraph = LeftPanel.AddComponent(new GUI.TGUICheckBox(new Vector2(5, LeftResultList.Pos.Y + LeftResultList.Size.Y + 3), new Vector2(0, 0), "Highlight")) as GUI.TGUICheckBox;
             LeftSearchCheckBoxShowOnGraph.Font = 1;
             LeftSearchCheckBoxShowOnGraph.backgroundColor = Color.Azure * 0.5f;
             LeftSearchCheckBoxShowOnGraph.transparentBackground = false;
+            LeftSearchCheckBoxShowOnGraph.Enabled = false;
+            LeftSeachButtonGraphar = LeftPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(100, LeftResultList.Pos.Y + LeftResultList.Size.Y + 3), new Vector2(95, 25), "  Grafar!")) as GUI.TGUIImgBtn;
+            LeftSeachButtonGraphar.AutoSize = false;
+            LeftSeachButtonGraphar.Font = 4;
+            LeftSeachButtonGraphar.Enabled = false;
+
+            // RightPanel
+            RightPanel.AddComponent(new GUI.TGUILabel(new Vector2(10, 5), new Vector2(100, 50), "Informações")).Font = 0;
+
 
             // Inicializa o modo de visualização
             Program.ViewMode = 0;
@@ -314,12 +377,13 @@ namespace VisualSort
             GUI.wBox = Content.Load<Texture2D>("wbox");
             GUI.stLine = Content.Load<Texture2D>("Line");
             GUI.CheckTex = Content.Load<Texture2D>("Check");
-            GUI.Fonts = new SpriteFont[5];
+            GUI.Fonts = new SpriteFont[6];
             GUI.Fonts[0] = Content.Load<SpriteFont>("TitleFont");
             GUI.Fonts[1] = Content.Load<SpriteFont>("TextFont");
             GUI.Fonts[2] = Content.Load<SpriteFont>("ListFont");
             GUI.Fonts[3] = Content.Load<SpriteFont>("BigTextFont");
             GUI.Fonts[4] = Content.Load<SpriteFont>("BoldTextFont");
+            GUI.Fonts[5] = Content.Load<SpriteFont>("SmallListFont");
             InitializeHideButtons();
             imgDivider1.Image = GUI.stLine;
             imgDivider1.useImage = true;
@@ -327,6 +391,7 @@ namespace VisualSort
             // Load the Sprites
             AppGraphics.NodoTex = Content.Load<Texture2D>("Nodo512");
             AppGraphics.BoxTex = Content.Load<Texture2D>("box");
+            AppGraphics.GlowTex = Content.Load<Texture2D>("Glow");
             // Initializes the Loading Circle
             AppGraphics.LoadingTexture = new Texture2D[5];
             AppGraphics.LoadingTexture[0] = Content.Load<Texture2D>("Loading1");
@@ -412,22 +477,35 @@ namespace VisualSort
                     if (oldMouseState.LeftButton == ButtonState.Pressed)
                     {
                         mouseTimer = 0;
+                        mouseTimerClicked = true;
                     }
                 }
                 // Verifica Double Click - seleciona, se houver
                 if (mouseState.LeftButton == ButtonState.Pressed)
                 {
                     if (oldMouseState.LeftButton == ButtonState.Released)
-                        if (mouseTimer < 10f)
-                            if (Program.NodoMouse != null)
-                                if (Program.NodoMouse.MouseOver == true)
-                                {
-                                    AppGraphics.SelecionaNodoComVoltar(Program.NodoMouse.InfoNodo.Nodo, Program.MaxNodoSelecionado);
-                                    Program.NodoMouse = null;
-                                }
+                    {
+                        if ((mouseTimer < 10f) && (mouseTimerClicked))
+                            if (MouseNodeHandler.NodoMouse != null)
+                            {
+                                AppGraphics.SelecionaNodoComVoltar(MouseNodeHandler.NodoMouse.InfoNodo.Nodo, MouseNodeHandler.MaxNodoSelecionado);
+                                MouseNodeHandler.UnMouseOver();
+                            }
+                    }
                 }
-                if (mouseTimer < 15)
+                if ((mouseTimer < 10) && (mouseTimerClicked))
+                {
                     mouseTimer++;
+                }
+                else
+                {
+                    if (MouseNodeHandler.NodoMouse != null)
+                    {
+                        AppGraphics.CarregaInformações(MouseNodeHandler.NodoMouse.InfoNodo.Nodo);
+                        MouseNodeHandler.UnMouseOver();
+                    }
+                    mouseTimerClicked = false;
+                }
                 // Move camera
                 keyboardState = Keyboard.GetState();
                 if (keyboardState.IsKeyDown(Keys.Left))
@@ -545,24 +623,42 @@ namespace VisualSort
 
             spriteBatch.Begin();
 
-            // Nome do nodo com mouse em cima
-            if ((Program.NodoMouse != null) && (Program.NodoMouse.MouseOver == true))
+            // Nome do nodo central
+            if ((MouseNodeHandler.MaxNodoSelecionado != -1) && 
+                (AppGraphics.MaxNodos[MouseNodeHandler.MaxNodoSelecionado].MainNodo != null) &&
+                (((MouseNodeHandler.NodoMouse == null) || (MouseNodeHandler.NodoMouse.InfoNodo != (AppGraphics.MaxNodos[MouseNodeHandler.MaxNodoSelecionado].MainNodo)))))
             {
-                string NomeD = Program.NodoMouse.InfoNodo.Nome;
-                
-                Vector2 DPos = Vector2.Transform(Program.NodoMouse.Pos, AppGraphics.Camera.get_transformation());
-                Vector2 NameSize = GUI.Fonts[3].MeasureString(NomeD);
-                DPos.X += (AppGraphics.DefaultNodeSize*0.5f * AppGraphics.Camera.Zoom);
-                DPos.Y -= NameSize.Y * 0.5f;
+                MouseNodeHandler.SelectNodo(MouseNodeHandler.NodoSelecionado.DrawNodo);
+                Vector2 Pos = Vector2.Transform(AppGraphics.MaxNodos[MouseNodeHandler.MaxNodoSelecionado].MainNodo.DrawNodo.Pos, AppGraphics.Camera.get_transformation());
+
                 spriteBatch.Draw(AppGraphics.BoxTex,
                     new Rectangle(
-                        (int)(DPos.X),
-                        (int)(DPos.Y),
-                        (int)(NameSize.X),
-                        (int)(NameSize.Y)),
+                        (int)(MouseNodeHandler.NSTextPos.X),
+                        (int)(MouseNodeHandler.NSTextPos.Y),
+                        (int)(MouseNodeHandler.NSTextSize.X),
+                        (int)(MouseNodeHandler.NSTextSize.Y)),
+                    null,
+                    Color.White * 0.92f, 0, new Vector2(0, 0), SpriteEffects.None, 0f);
+                for (int i = 0; i < MouseNodeHandler.NSTexts.Count; i++)
+                {
+                    spriteBatch.DrawString(GUI.Fonts[2], MouseNodeHandler.NSTexts[i], MouseNodeHandler.NSTextPos + new Vector2(1, i * (MouseNodeHandler.NSTextSize.Y / MouseNodeHandler.NSTexts.Count)), Color.White * 0.92f);
+                }
+            }
+            // Nome do nodo com mouse em cima
+            if ((MouseNodeHandler.NodoMouse != null))
+            {
+                spriteBatch.Draw(AppGraphics.BoxTex,
+                    new Rectangle(
+                        (int)(MouseNodeHandler.MOTextPos.X),
+                        (int)(MouseNodeHandler.MOTextPos.Y),
+                        (int)(MouseNodeHandler.MOTextSize.X + 2),
+                        (int)(MouseNodeHandler.MOTextSize.Y)),
                     null,
                     Color.White, 0, new Vector2(0, 0), SpriteEffects.None, 0f);
-                spriteBatch.DrawString(GUI.Fonts[3], NomeD, DPos, Color.White);
+                for (int i = 0; i < MouseNodeHandler.MOTexts.Count; i++)
+                {
+                    spriteBatch.DrawString(GUI.Fonts[2], MouseNodeHandler.MOTexts[i], MouseNodeHandler.MOTextPos + new Vector2(1, (int)(i * (MouseNodeHandler.MOTextSize.Y / MouseNodeHandler.MOTexts.Count))), Color.White);
+                }
             }
 
             // Desenha a GUI

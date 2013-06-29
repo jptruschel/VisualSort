@@ -17,6 +17,7 @@ namespace VisualSort
     {
         /// <summary>
         /// Algumas definições globais e o início do programa
+        ///   ps: desculpe, mara abel
         /// </summary>
 
         /* BLOCOS DE DADOS SALVOS NO DISCO */
@@ -35,6 +36,7 @@ namespace VisualSort
         public static TBigList mCapítulos = new TBigList(4);
         public static TBigList mConferências = new TBigList(5);
         public static TBigList mInstituições = new TBigList(6);
+        public static TBigList[] mListas;
         // Retorna o Nodo, dado um Ponteiro para Nodo
         // Tipo (0= Pessoa; 1= Artigo; 2= Livro; 3= Periódico; 4= Capítulo; 5= Conferência; 6= Instituição)
         public static TInfoNodo GetNodoFromLists(TPNodo Nodo)
@@ -69,12 +71,6 @@ namespace VisualSort
         public static int ViewMode = 0;
         public static int maxNodoSelecionado = 0;
 
-        /* OUTRAS VARIÁVEIS GLOBAIS - DESCULPE, MARA ABEL */
-        public static TInfoNodo NodoSelecionado;
-        public static TDrawNodo NodoMouse;
-        public static int MaxNodoSelecionado;
-        public static TDrawMaxNodo MaxNodoMouse;
-
         static void Main(string[] args)
         {
             // Inicializa
@@ -87,7 +83,8 @@ namespace VisualSort
             fInstituições.InicializaGravação();
             CSVBIZU.ConferenciasCSV();
             CSVBIZU.PeriodicosCSV();
-            XMLBIZU.ReadFromXML("C:\\Users\\João Paulo T Ruschel\\Documents\\Visual Studio 2010\\Projects\\VisualSort\\VisualSort\\Tabelas\\krug.xml");
+            XMLBIZU.ReadFromXML(Constants.DiretorioRaiz + "arquivo0.xml");
+            XMLBIZU.ReadFromXML(Constants.DiretorioRaiz + "arquivo1.xml");
             fPessoas.FinalizaGravação();
             fArtigos.FinalizaGravação();
             fLivros.FinalizaGravação();

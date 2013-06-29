@@ -21,7 +21,7 @@ namespace VisualSort
         public Vector2 FinalPos;    // posição final (=Pos, exceto quando está animando)
         public float SpeedAlpha;
         public Color Color;
-        public bool Selected, MouseOver;
+        public bool Selected;
         public float RotAngle;
         public TInfoNodo InfoNodo;
 
@@ -53,7 +53,6 @@ namespace VisualSort
                 Pos += Speed;
                 Speed = new Vector2((FinalPos.X - Pos.X) / SpeedAlpha, (FinalPos.Y - Pos.Y) / SpeedAlpha);
             }
-            MouseOver = false;
             if (UpdateMouse)
                 // Verifica se está com o mouse em cima
                 if (!Rectangle.Intersect(
@@ -67,12 +66,12 @@ namespace VisualSort
                          (int)AppGraphics.Camera.mousePos.Y,
                          1, 1
                          )).IsEmpty)
-                    MouseOver = true;
+                {
+                    MouseNodeHandler.MouseOverNodo(this);
+                }
                 else
                 {
-                    MouseOver = false;
-                    if (Program.NodoMouse == this)
-                        Program.NodoMouse = null;
+                    MouseNodeHandler.UnMouseOver(this);
                 }
             // Ãngulos
             if (Selected)
@@ -89,22 +88,40 @@ namespace VisualSort
         {
             if (AppGraphics.Camera.isInCameraView(Pos))
             {
-                if (MouseOver)
+                if (MouseNodeHandler.NodoMouse == this)
                     if (this.Selected)
-                        this.Color = Color.GreenYellow;
+                        this.Color = Color.Yellow;
                     else
                         this.Color = Color.Yellow;
                 else
                     if (this.Selected)
                         if (AppGraphics.MaxNodos[Program.maxNodoSelecionado].Loops > 0)
-                            this.Color = Color.White; //* (1 / AppGraphics.MaxNodos[Program.maxNodoSelecionado].Loops);
+                            this.Color = AppGraphics.GetColorFromType(this.InfoNodo.Nodo.Tipo) * (1 / AppGraphics.MaxNodos[Program.maxNodoSelecionado].Loops);
                         else
-                            this.Color = Color.White;
+                            this.Color = AppGraphics.GetColorFromType(this.InfoNodo.Nodo.Tipo);
                     else
-                        this.Color = Color.Azure;
+                        this.Color = AppGraphics.GetColorFromType(this.InfoNodo.Nodo.Tipo);
                 Color cor = this.Color;
             //    if (this.Selected)
              //       cor = Color.Green;
+                // Se o usuário que highlight e esse nodo está nos search results, highlight
+                if (Renderer.LeftSearchCheckBoxShowOnGraph.Checked)
+                {
+                    //if (Renderer.SearchResults.Contains(this.InfoNodo))
+                    if (this.InfoNodo.Pesquisado)
+                    {
+                        spriteBatch.Draw(AppGraphics.GlowTex,
+                            new Rectangle(
+                                (int)(this.Pos.X),
+                                (int)(this.Pos.Y),
+                                (int)(AppGraphics.DefaultNodeSize * 2.32f),
+                                (int)(AppGraphics.DefaultNodeSize * 2.32f)),
+                            new Rectangle(0, 0, AppGraphics.GlowTex.Width, AppGraphics.GlowTex.Height),
+                            cor,
+                            0f,
+                            new Vector2(AppGraphics.GlowTex.Width * 0.5f, AppGraphics.GlowTex.Height * 0.5f), SpriteEffects.None, 0f);
+                    }
+                }
                 // Desenha o nodo
                 spriteBatch.Draw(AppGraphics.NodoTex,
                     new Rectangle(
@@ -138,11 +155,6 @@ namespace VisualSort
                         (int)(AppGraphics.LoadingTexture[4].Height * 0.25f)),
                     new Rectangle(0, 0, AppGraphics.LoadingTexture[4].Width, AppGraphics.LoadingTexture[4].Height),
                     Color.White, 0f, new Vector2(0,0), SpriteEffects.None, 0f);
-                }
-                // Se o mouse estiver em cima, desenhar uma caixinha com o nome
-                if (MouseOver)
-                {
-                    Program.NodoMouse = this;
                 }
             }
         }
@@ -190,7 +202,6 @@ namespace VisualSort
         {
             // Reinicializa o MainNodo para todos os Elementos a serem desenhados
             MainNodo.DrawNodo = new TDrawNodo(MainNodo);
-            MainNodo.DrawNodo.MouseOver = false;
             MainNodo.DrawNodo.Selected = true;
             MainNodo.DrawNodo.MoveTo(Pos);
             MainNodo.DrawNodo.Color = Color.White;
@@ -248,7 +259,6 @@ namespace VisualSort
             // Inicializa o DrawNodo para todos os Elementos a serem desenhados
             // Cria o DrawNodo principal
             MainNodo.DrawNodo = new TDrawNodo(MainNodo);
-            MainNodo.DrawNodo.MouseOver = false;
             MainNodo.DrawNodo.Selected = true;
             MainNodo.DrawNodo.MoveTo(Pos);
             MainNodo.DrawNodo.Color = Color.White;
@@ -557,6 +567,125 @@ namespace VisualSort
         }
     }
 
+    // Mini-classe para deixar melhor o mouse-over, selecionar nodos
+    public static class MouseNodeHandler
+    {
+        public static TInfoNodo NodoSelecionado;
+        public static TDrawNodo NodoMouse;
+        public static int MaxNodoSelecionado;
+        public static TDrawMaxNodo MaxNodoMouse;
+        public static Vector2 MOTextPos;
+        public static Vector2 MOTextSize;
+        public static List<string> MOTexts;
+
+        public static Vector2 NSTextPos;
+        public static Vector2 NSTextSize;
+        public static List<string> NSTexts;
+
+        public static void UnMouseOver(TDrawNodo Nodo)
+        {
+            if (NodoMouse == Nodo)
+                NodoMouse = null;
+        }
+        public static void UnMouseOver()
+        {
+            NodoMouse = null;
+            MOTexts = null;
+        }
+        public static void MouseOverNodo(TDrawNodo Nodo)
+        {
+            NodoMouse = Nodo;
+
+            string NomeD = NodoMouse.InfoNodo.Nome;
+            if (NomeD != null)
+            {
+                MOTextPos = Vector2.Transform(NodoMouse.Pos, AppGraphics.Camera.get_transformation());
+                MOTextSize = new Vector2(0, 0);
+                MOTextPos.Y += (AppGraphics.DefaultNodeSize * 0.5f * AppGraphics.Camera.Zoom);
+                MOTexts = new List<string>();
+                string[] NomeDSS = NomeD.Split(' ');
+                MOTexts.Add("");
+                int NomeDSA = 0;
+                MOTextSize.Y += GUI.Fonts[2].MeasureString(NomeD).Y;
+                for (int i = 0; i < NomeDSS.Length; i++)
+                {
+                    MOTexts[NomeDSA] += NomeDSS[i] + " ";
+                    Vector2 sSize = GUI.Fonts[2].MeasureString(MOTexts[NomeDSA]);
+                    if (sSize.X > MOTextSize.X)
+                        MOTextSize.X = sSize.X;
+                    if (i < NomeDSS.Length - 1)
+                        if (GUI.Fonts[2].MeasureString(MOTexts[NomeDSA] + NomeDSS[i + 1]).X > (AppGraphics.ScreenCenter.X * 2) - MOTextPos.X - Renderer.RightPanel.Size.X)
+                        {
+                            NomeDSA++;
+                            MOTexts.Add("");
+                            MOTextSize.Y += sSize.Y;
+                        }
+                }
+                MOTextPos.X -= MOTextSize.X * 0.5f;
+            }
+            else
+                MouseNodeHandler.MOTexts = new List<string>();
+        }
+        public static void SelectNodo(TDrawNodo Nodo)
+        {
+            if (Nodo != null)
+            {
+                NodoSelecionado = Nodo.InfoNodo;
+
+                string NomeD = NodoSelecionado.Nome;
+                if (NomeD != null)
+                {
+                    NSTextPos = Vector2.Transform(Nodo.Pos, AppGraphics.Camera.get_transformation());
+                    NSTextSize = new Vector2(0, 0);
+                    NSTextPos.Y += (AppGraphics.DefaultNodeSize * 0.5f * AppGraphics.Camera.Zoom);
+                    NSTexts = new List<string>();
+                    string[] NomeDSS = NomeD.Split(' ');
+                    NSTexts.Add("");
+                    int NomeDSA = 0;
+                    NSTextSize.Y += GUI.Fonts[2].MeasureString(NomeD).Y;
+                    int i = 0;
+                    bool há = false;
+                    int max = 3;
+                    while ((!há) && (max > 0))
+                    {
+                        i = 0;
+                        while ((i < NomeDSS.Length))
+                        {
+                            if (NomeDSS[i].Length >= max)
+                            {
+                                NSTexts[NomeDSA] += NomeDSS[i] + " ";
+                                Vector2 sSize = GUI.Fonts[2].MeasureString(NSTexts[NomeDSA]);
+                                if (sSize.X > NSTextSize.X)
+                                    NSTextSize.X = sSize.X;
+                                if (i < NomeDSS.Length - 1)
+                                    if ((GUI.Fonts[2].MeasureString(NSTexts[NomeDSA] + NomeDSS[i + 1]).X > (AppGraphics.ScreenCenter.X * 2) - NSTextPos.X - Renderer.RightPanel.Size.X) ||
+                                        (GUI.Fonts[2].MeasureString(NSTexts[NomeDSA] + NomeDSS[i + 1]).X > Constants.MaxSelectedNodeSizeAlwaysText))
+                                    {
+                                        NomeDSA++;
+                                        NSTexts.Add("");
+                                        há = true;
+                                    }
+                            }
+                            i++;
+                            if ((NSTexts.Count >= Constants.MaxSelectedNodeLinesAlwaysText))
+                            {
+                                i = NomeDSS.Length + 1;
+                            }
+                        }
+                        max--;
+                    }
+                    NSTextSize.Y = 0;
+                    for (int j = 0; j < NSTexts.Count; j++)
+                        if ((NSTexts[j] != "") && (NSTexts[j] != " "))
+                            NSTextSize.Y += GUI.Fonts[2].MeasureString(NSTexts[j]).Y;
+                    NSTextPos.X -= NSTextSize.X * 0.5f;
+                }
+                else
+                    MouseNodeHandler.NSTexts = new List<string>();
+            }
+        }
+    }
+
     // Define variáveis e funções para a parte gráfica do aplicativo
     public static class AppGraphics
     {
@@ -575,9 +704,34 @@ namespace VisualSort
         public static Texture2D NodoTex;
         public static Texture2D[] LoadingTexture;
         public static Texture2D BoxTex;
+        public static Texture2D GlowTex;
 
         // O centro da tela
         public static Vector2 ScreenCenter;
+
+        // Retorna uma cor
+        public static Color GetColorFromType(int Tipo)
+        {
+            switch (Tipo)
+            {
+                case 0:
+                    return Color.Azure;
+                case 1:
+                    return Color.GreenYellow;
+                case 2:
+                    return Color.SaddleBrown;
+                case 3:
+                    return Color.CadetBlue;
+                case 4:
+                    return Color.NavajoWhite;
+                case 5:
+                    return Color.LightGreen;
+                case 6:
+                    return Color.DarkRed;
+                default:
+                    return Color.Red;
+            }
+        }
 
         // Reseta a visualização
         public static void ResetView()
@@ -586,7 +740,7 @@ namespace VisualSort
             MaxNodos.Clear();
             DPrimitives.Lines.Clear();
         }
-        // Sleciona um nodo / maxNodo, dependendo do ViewMode
+        // Seleciona um nodo / maxNodo, dependendo do ViewMode
         public static void SelecionaNodoComVoltar(TPNodo Nodo, int Anterior)
         {
             if (Anterior > -1)
@@ -599,6 +753,7 @@ namespace VisualSort
                 for (int i = Anterior + 1; i < MaxNodos.Count; i++)
                     MaxNodos.RemoveAt(Anterior+1);
             }
+            
             // Cria o novo na posição 0,0
             AppGraphics.MaxNodos.Add(
                 new TDrawMaxNodo(Nodo, new Vector2(0, 0)));
@@ -606,8 +761,16 @@ namespace VisualSort
             AppGraphics.MaxNodos[AppGraphics.MaxNodos.Count - 1].Inicializa();
             // Olha
             AppGraphics.Camera.LookAt(new Vector2(0, 0));
-            Program.MaxNodoSelecionado = AppGraphics.MaxNodos.Count - 1;
+            MouseNodeHandler.MaxNodoSelecionado = AppGraphics.MaxNodos.Count - 1;
+
+            MouseNodeHandler.SelectNodo(AppGraphics.MaxNodos[MouseNodeHandler.MaxNodoSelecionado].MainNodo.DrawNodo);
         }
+        // Carrega as informações de um nodo na aba da direita
+        public static void CarregaInformações(TPNodo Nodo)
+        {
+
+        }
+
         // Seleciona um nodo - coloca-o no centro e faz todos os ligados serem desenhados
    /*     public static void SelecionaNodo(TPNodo Nodo, int iMaxNodo)
         {
