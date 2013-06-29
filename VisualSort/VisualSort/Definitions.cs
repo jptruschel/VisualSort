@@ -188,7 +188,7 @@ namespace VisualSort
 
             //XmlTextReader reader = new XmlTextReader(arquivo);
           //  reader. = Encoding.UTF32; //ISO-8859-1
-            XmlReader reader = XmlReader.Create(new StreamReader(arquivo, Encoding.GetEncoding("ISO-8859-9")));
+            XmlReader reader = XmlReader.Create(new StreamReader(arquivo, Encoding.GetEncoding("UTF-8")));
             while (reader.Read())
             {
                 if (reader.Name == "DADOS-GERAIS" && reader.AttributeCount > 0)
@@ -208,10 +208,10 @@ namespace VisualSort
                     int ÍndiceArtigo = -1;
                     List<int> Autores = new List<int>();
                     artigo.PalavrasChave = new List<string>();
+                    Autores.Clear();
                     XmlReader PArtigo = reader.ReadSubtree();
                     while (PArtigo.Read())
                     {
-                        Autores.Clear();
                         if (PArtigo.Name == "DADOS-BASICOS-DO-ARTIGO" && reader.AttributeCount > 0)
                         {
                             artigo.Natureza = PArtigo.GetAttribute("NATUREZA");
@@ -247,6 +247,7 @@ namespace VisualSort
                     {
                         Program.mArtigos[ÍndiceArtigo].Data = Program.fArtigos.AdicionaInformação(artigo);
                         Program.mPessoas[Índice].AdicionaLigaçãoCom(Program.mArtigos[ÍndiceArtigo].Nodo);
+                        Program.mArtigos[ÍndiceArtigo].AdicionaLigaçãoCom(Program.mPessoas[Índice].Nodo);
                         foreach (int i in Autores)
                             Program.mPessoas[i].AdicionaLigaçãoCom(Program.mArtigos[ÍndiceArtigo].Nodo);
                     }
