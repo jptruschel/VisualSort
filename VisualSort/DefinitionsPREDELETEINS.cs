@@ -47,19 +47,6 @@ namespace VisualSort
             this.Bloco = Bloco;
             this.Offset = Offset;
         }
-
-        public void GravaBPos(BinaryWriter writer)
-        {
-            writer.Write(this.Bloco);
-            writer.Write(this.Offset);
-        }
-        public static BPos LeBPos(BinaryReader reader)
-        {
-            BPos aux = new BPos();
-            aux.Bloco = reader.ReadInt64();
-            aux.Offset = reader.ReadInt64();
-            return aux;
-        }
         public static BPos operator +(BPos p1, BPos p2)
         {
             return new BPos(p1.Bloco + p2.Bloco, p1.Offset + p2.Offset);
@@ -157,8 +144,8 @@ namespace VisualSort
                     periódico.Nome = aux[1];
                     periódico.Qualis = aux[2];
                     //Console.WriteLine(periódico.ToString());
-                    int Índice = (int)Program.mPeriódicos.NovoNodo(periódico.Nome);
-                    Program.mPeriódicos[Índice].Data = Program.fPeridódicos.AdicionaInformação(periódico);
+                    int Índice = (int)Program.mPeridódicos.NovoNodo(periódico.Nome);
+                    Program.mPeridódicos[Índice].Data = Program.fPeridódicos.AdicionaInformação(periódico);
                 }
             }
 
@@ -219,10 +206,9 @@ namespace VisualSort
                 {
                     TFArtigo artigo = new TFArtigo();
                     int ÍndiceArtigo = -1;
-                    artigo.Tipo = 0;
                     List<int> Autores = new List<int>();
-                    List<int> Periódicos = new List<int>();
                     artigo.PalavrasChave = new List<string>();
+                    Autores.Clear();
                     XmlReader PArtigo = reader.ReadSubtree();
                     while (PArtigo.Read())
                     {
@@ -238,11 +224,7 @@ namespace VisualSort
                         else if (PArtigo.Name == "DETALHAMENTO-DO-ARTIGO" && reader.AttributeCount > 0)
                         {
                             artigo.ISSN = PArtigo.GetAttribute("ISSN");
-                            artigo.PeriodicoOuConferencia = PArtigo.GetAttribute("TITULO-DO-PERIODICO-OU-REVISTA");
-                            int indiceper = (int)Program.mPeriódicos.NovoNodo(artigo.PeriodicoOuConferencia,artigo.ISSN);
-                            Program.mArtigos[ÍndiceArtigo].AdicionaLigaçãoCom(new TPNodo(indiceper, 5));
-                            Periódicos.Add(indiceper);
-                            
+                            artigo.Periodico = PArtigo.GetAttribute("TITULO-DO-PERIODICO-OU-REVISTA");
                         }
                         else if (PArtigo.Name == "PALAVRAS-CHAVE" && reader.AttributeCount>0)
                         {
@@ -252,7 +234,7 @@ namespace VisualSort
                         }
                         else if (PArtigo.Name == "AUTORES" && reader.AttributeCount > 0)
                         {
-                            if(Pessoa.NomeCompleto!=string.Empty)
+                            if(PArtigo.GetAttribute("NOME-COMPLETO-DO-AUTOR")!=Pessoa.NomeCompleto&&Pessoa.NomeCompleto!=string.Empty)
                             {
                                 string NomeCompleto = PArtigo.GetAttribute("NOME-COMPLETO-DO-AUTOR");
                                 int indicep = (int)Program.mPessoas.NovoNodo(NomeCompleto);
@@ -268,8 +250,6 @@ namespace VisualSort
                         Program.mArtigos[ÍndiceArtigo].AdicionaLigaçãoCom(Program.mPessoas[Índice].Nodo);
                         foreach (int i in Autores)
                             Program.mPessoas[i].AdicionaLigaçãoCom(Program.mArtigos[ÍndiceArtigo].Nodo);
-                        foreach (int i in Periódicos)
-                            Program.mPeriódicos[i].AdicionaLigaçãoCom(Program.mArtigos[ÍndiceArtigo].Nodo);
                     }
                 }
                 else if (reader.Name == "LIVROS-E-CAPITULOS")
@@ -327,62 +307,7 @@ namespace VisualSort
 
                     }
                     while (PLivrosCaps.Read());
-                }
-                else if (reader.Name == "TRABALHO-EM-EVENTOS")
-                {
-                        TFArtigo artigo = new TFArtigo();
-                        int ÍndiceTrab = -1;
-                        artigo.Tipo = 1;
-                        List<int> Autorest = new List<int>();
-                        List<int> Conferencias = new List<int>();
-                        artigo.PalavrasChave = new List<string>();
-                        XmlReader PTrab = reader.ReadSubtree();
-                        while (PTrab.Read())
-                        {
-                            if (PTrab.Name == "DADOS-BASICOS-DO-TRABALHO" && reader.AttributeCount > 0)
-                            {
-                                artigo.Natureza = PTrab.GetAttribute("NATUREZA");
-                                artigo.Idioma = PTrab.GetAttribute("IDIOMA");
-                                artigo.AnoPublicação = int.Parse(PTrab.GetAttribute("ANO-DO-TRABALHO"));
-                                artigo.Título = PTrab.GetAttribute("TITULO-DO-TRABALHO");
-                                artigo.MeioDivulgação = PTrab.GetAttribute("MEIO-DE-DIVULGACAO");
-                                ÍndiceTrab = (int)Program.mArtigos.NovoNodo(artigo.Título);
-                            }
-                            else if (PTrab.Name == "DETALHAMENTO-DO-TRABALHO" && reader.AttributeCount > 0)
-                            {
-                                artigo.ISSN = "i";
-                                artigo.PeriodicoOuConferencia = PTrab.GetAttribute("NOME-DO-EVENTO");
-                                int indicec = (int)Program.mConferências.NovoNodo(artigo.PeriodicoOuConferencia);
-                                Program.mArtigos[ÍndiceTrab].AdicionaLigaçãoCom(new TPNodo(indicec, 5));
-                                Conferencias.Add(indicec);
-                            }
-                            else if (PTrab.Name == "PALAVRAS-CHAVE" && reader.AttributeCount > 0)
-                            {
-                                artigo.PalavrasChave = new List<string>();
-                                for (int i = 1; i <= PTrab.AttributeCount; i++)
-                                    artigo.PalavrasChave.Add(PTrab.GetAttribute("PALAVRA-CHAVE-" + i));
-                            }
-                            else if (PTrab.Name == "AUTORES" && reader.AttributeCount > 0)
-                            {
-                                if (Pessoa.NomeCompleto != string.Empty)
-                                {
-                                    string NomeCompleto = PTrab.GetAttribute("NOME-COMPLETO-DO-AUTOR");
-                                    int indicep = (int)Program.mPessoas.NovoNodo(NomeCompleto);
-                                    Program.mArtigos[ÍndiceTrab].AdicionaLigaçãoCom(new TPNodo(indicep, 0));
-                                    Autorest.Add(indicep);
-                                }
-                            }
-                    }
-                        if (ÍndiceTrab > -1)
-                        {
-                            Program.mArtigos[ÍndiceTrab].Data = Program.fArtigos.AdicionaInformação(artigo);
-                            Program.mPessoas[Índice].AdicionaLigaçãoCom(Program.mArtigos[ÍndiceTrab].Nodo);
-                            foreach (int i in Autorest)
-                                Program.mPessoas[i].AdicionaLigaçãoCom(Program.mArtigos[ÍndiceTrab].Nodo);
-                            foreach (int i in Conferencias)
-                                Program.mConferências[i].AdicionaLigaçãoCom(Program.mArtigos[ÍndiceTrab].Nodo);
-                        }
-                }
+                }   
             }
             if (Índice > -1)
                 Program.mPessoas[Índice].Data = Program.fPessoas.AdicionaInformação(Pessoa);
@@ -431,22 +356,6 @@ namespace VisualSort
         {
             return "ISSN :" + this.ISSN + "\nNome :" + this.Nome + "\nQUALIS :" + this.Qualis;
         }
-
-        public static void GravaBinário(BinaryWriter writer, TFPeriódico periódico)
-        {
-            writer.Write(periódico.ISSN);
-            writer.Write(periódico.Nome);
-            writer.Write(periódico.Qualis);
-        }
-
-        public static TFPeriódico LeBinario(BinaryReader reader)
-        {
-            TFPeriódico aux = new TFPeriódico();
-            aux.ISSN = reader.ReadString();
-            aux.Nome = reader.ReadString();
-            aux.Qualis = reader.ReadString();
-            return aux;
-        }
     }
     // Uma conferência
     public struct TFConferência
@@ -458,24 +367,6 @@ namespace VisualSort
         public override string ToString()
         {
             return "Sigla :" + this.Sigla + "\nNome :" + this.Nome + "\nCaráter :" + this.Caráter + "\nQUALIS :" + this.Qualis;
-        }
-
-        public static void GravaBinário(BinaryWriter writer, TFConferência conferencia)
-        {
-            writer.Write(conferencia.Sigla);
-            writer.Write(conferencia.Nome);
-            writer.Write(conferencia.Caráter);
-            writer.Write(conferencia.Qualis);
-        }
-
-        public static TFConferência LeBinario(BinaryReader reader)
-        {
-            TFConferência aux = new TFConferência();
-            aux.Sigla = reader.ReadString();
-            aux.Nome = reader.ReadString();
-            aux.Caráter = reader.ReadString();
-            aux.Qualis = reader.ReadString();
-            return aux;
         }
     }
     //Um Capitulo de Livro
@@ -490,24 +381,21 @@ namespace VisualSort
         public string MeioDivulgação;
         public List<string> PalavrasChave; //Palavras chave
 
-        public static void GravaBinário(BinaryWriter writer, TFCap cap)
+        public void GravaBinário(BinaryWriter writer)
         {
-            writer.Write(cap.Título);
-            writer.Write(cap.ISBN);
-            writer.Write(cap.Idioma);
-            writer.Write(cap.AnoPublicação);
-            if (cap.Natureza == null)
-                writer.Write("");
-            else
-                writer.Write(cap.Natureza);
-            writer.Write(cap.Livro);
-            writer.Write(cap.MeioDivulgação);
-            writer.Write(cap.PalavrasChave.Count);
-            for (int i = 0; i < cap.PalavrasChave.Count; i++)
-                writer.Write(cap.PalavrasChave[i]);
+            writer.Write(this.Título);
+            writer.Write(this.ISBN);
+            writer.Write(this.Idioma);
+            writer.Write(this.AnoPublicação);
+            writer.Write(this.Natureza);
+            writer.Write(this.Livro);
+            writer.Write(this.MeioDivulgação);
+            writer.Write(this.PalavrasChave.Count);
+            for (int i = 0; i < this.PalavrasChave.Count; i++)
+                writer.Write(this.PalavrasChave[i]);
         }
 
-        public static TFCap LeBinario(BinaryReader reader)
+        public TFCap LeBinario(BinaryReader reader)
         {
             TFCap cap = new TFCap();
             cap.Título = reader.ReadString();
@@ -532,40 +420,13 @@ namespace VisualSort
         public int AnoPublicação;       // Ano da Publicação
         public string MeioDivulgação;
         public List<string> PalavrasChave; //Palavras chave
-
-        public static void GravaBinário(BinaryWriter writer, TFLivro livro)
-        {
-            writer.Write(livro.Título);
-            writer.Write(livro.ISBN);
-            writer.Write(livro.Idioma);
-            writer.Write(livro.AnoPublicação);
-            writer.Write(livro.MeioDivulgação);
-            writer.Write(livro.PalavrasChave.Count);
-            for (int i = 0; i < livro.PalavrasChave.Count; i++)
-                writer.Write(livro.PalavrasChave[i]);
-        }
-
-        public static TFLivro LeBinario(BinaryReader reader)
-        {
-            TFLivro livro = new TFLivro();
-            livro.Título = reader.ReadString();
-            livro.ISBN = reader.ReadString();
-            livro.Idioma = reader.ReadString();
-            livro.AnoPublicação = reader.ReadInt32();
-            livro.MeioDivulgação = reader.ReadString();
-            int aux = reader.ReadInt32();
-            for (int i = 0; i < aux; i++)
-                livro.PalavrasChave.Add(reader.ReadString());
-            return livro;
-        }
     }
     // Uma Produção Bibliográfica
     public struct TFArtigo
     {
-        public byte Tipo;                  //1 = Periodico; 2 = Conferencia   
-        public string Título;              // Título
-        public string ISSN;             // ISSN relativo
-        public string PeriodicoOuConferencia;        // Nome do periódico ou conferencia
+        public string Título;           // Título
+        public string ISSN;             // ISSN do 
+        public string Periodico;        // Nome do periódico
         public string MeioDivulgação;   // Meio de Divulgação da Produção
         public string Idioma;           // Idioma da Produção
         public int AnoPublicação;       // Ano da Publicação
@@ -574,12 +435,7 @@ namespace VisualSort
 
         public override string ToString()
         {
-            string aux;
-            if (Tipo == 0)
-                aux = "Tipo : Periódico";
-            else
-                aux = "Tipo : Conferencia";
-            aux += "\nTítulo: " + this.Título + "\nISSN :" + this.ISSN + "\nPeriodico :" + this.PeriodicoOuConferencia + "\nMeio de Divulgação" + this.MeioDivulgação + "\nIdioma :" + this.Idioma + "\nAno de Publicação :" + this.AnoPublicação.ToString() + "\nNatureza :" + this.Natureza + "\nPalavras-Chave :";
+            string aux = "\nTítulo: " + this.Título + "\nISSN :" + this.ISSN + "\nPeriodico :" + this.Periodico + "\nMeio de Divulgação" + this.MeioDivulgação + "\nIdioma :" + this.Idioma + "\nAno de Publicação :" + this.AnoPublicação.ToString() + "\nNatureza :" + this.Natureza + "\nPalavras-Chave :";
             if (this.PalavrasChave != null)
             {
                 foreach (string s in this.PalavrasChave)
@@ -590,10 +446,9 @@ namespace VisualSort
 
         public static void GravaBinário(BinaryWriter writer, TFArtigo artigo)
         {
-            writer.Write(artigo.Tipo);
             writer.Write(artigo.Título);
             writer.Write(artigo.ISSN);
-            writer.Write(artigo.PeriodicoOuConferencia);
+            writer.Write(artigo.Periodico);
             writer.Write(artigo.MeioDivulgação);
             writer.Write(artigo.Idioma);
             writer.Write(artigo.AnoPublicação);
@@ -606,10 +461,9 @@ namespace VisualSort
         public static TFArtigo LeBinario(BinaryReader reader)
         {
             TFArtigo artigo = new TFArtigo();
-            artigo.Tipo = reader.ReadByte();
             artigo.Título = reader.ReadString();
             artigo.ISSN = reader.ReadString();
-            artigo.PeriodicoOuConferencia = reader.ReadString();
+            artigo.Periodico = reader.ReadString();
             artigo.MeioDivulgação = reader.ReadString();
             artigo.Idioma = reader.ReadString();
             artigo.AnoPublicação = reader.ReadInt32();
@@ -619,6 +473,11 @@ namespace VisualSort
                 artigo.PalavrasChave.Add(reader.ReadString());
             return artigo;
         }
+    }
+    // Uma Instituição
+    public struct TFInstituição
+    {
+        public string Nome;             // Nome da instituição
     }
 
     // Classes que fazem a ponte RAM <-> Disco
@@ -635,25 +494,6 @@ namespace VisualSort
             blocoCount = 0;
             uÍndiceNoBloco = 0;
         }
-
-        public static TBlocoPessoasHandler LeIndices(string arquivo)
-        {
-            BinaryReader reader = new BinaryReader(File.Open(arquivo, FileMode.Open));
-            TBlocoPessoasHandler handler = new TBlocoPessoasHandler(); 
-            handler.blocoCount = reader.ReadInt32();
-            handler.uÍndiceNoBloco = reader.ReadInt32();
-            reader.Close();
-            return handler;
-        }
-
-        public void GravaIndices(string arquivo)
-        {
-            BinaryWriter writer = new BinaryWriter(File.Open(arquivo, FileMode.Create));
-            writer.Write(this.blocoCount);
-            writer.Write(this.uÍndiceNoBloco);
-            writer.Close();
-        }
-
         public void InicializaGravação()
         {
             BlocoAtual = new TFPessoa[Constants.NodosPorBloco];
@@ -685,7 +525,7 @@ namespace VisualSort
             return new BPos(-1, -1);
         }
 
-        public TFPessoa GetPessoa(BPos pos) //pode jogar excessão
+        protected static TFPessoa GetPessoa(BPos pos) //pode jogar excessão
         {
             TFPessoa aux = new TFPessoa();
             int i;
@@ -734,25 +574,6 @@ namespace VisualSort
             BlocoAtual = null;
             blocoCount++;
         }
-
-        public static TBlocoArtigosHandler LeIndices(string arquivo)
-        {
-            BinaryReader reader = new BinaryReader(File.Open(arquivo, FileMode.Open));
-            TBlocoArtigosHandler handler = new TBlocoArtigosHandler();
-            handler.blocoCount = reader.ReadInt32();
-            handler.uÍndiceNoBloco = reader.ReadInt32();
-            reader.Close();
-            return handler;
-        }
-
-        public void GravaIndices(string arquivo)
-        {
-            BinaryWriter writer = new BinaryWriter(File.Open(arquivo, FileMode.Create));
-            writer.Write(this.blocoCount);
-            writer.Write(this.uÍndiceNoBloco);
-            writer.Close();
-        }
-
         public BPos AdicionaInformação(TFArtigo Informação)
         {
             if (BlocoAtual != null)
@@ -773,7 +594,7 @@ namespace VisualSort
             return new BPos(-1, -1);
         }
 
-        public TFArtigo GetArtigo(BPos pos) //pode jogar excessão
+        protected static TFArtigo GetArtigo(BPos pos) //pode jogar excessão
         {
             TFArtigo aux = new TFArtigo();
             int i;
@@ -803,12 +624,14 @@ namespace VisualSort
     public class TBlocoLivrosHandler
     {
         private TFLivro[] BlocoAtual;
+        private TFLivro[][] BlocoBuffer;
         protected int blocoCount;
         protected int uÍndiceNoBloco;
 
         public TBlocoLivrosHandler()
         {
             BlocoAtual = null;
+            BlocoBuffer = null;
             blocoCount = 0;
             uÍndiceNoBloco = 0;
         }
@@ -819,84 +642,58 @@ namespace VisualSort
         public void FinalizaGravação()
         {
             if (uÍndiceNoBloco > 0)
-                SalvarBloco(Constants.DiretorioRaiz+Constants.blocLivrosFileName + blocoCount + ".blc");
-            BlocoAtual = null;
+                SalvarBloco(Constants.blocLivrosFileName + blocoCount + ".blc");
             blocoCount++;
+            BlocoAtual = null;
         }
-
-        public static TBlocoLivrosHandler LeIndices(string arquivo)
-        {
-            BinaryReader reader = new BinaryReader(File.Open(arquivo, FileMode.Open));
-            TBlocoLivrosHandler handler = new TBlocoLivrosHandler();
-            handler.blocoCount = reader.ReadInt32();
-            handler.uÍndiceNoBloco = reader.ReadInt32();
-            reader.Close();
-            return handler;
-        }
-
-        public void GravaIndices(string arquivo)
-        {
-            BinaryWriter writer = new BinaryWriter(File.Open(arquivo, FileMode.Create));
-            writer.Write(this.blocoCount);
-            writer.Write(this.uÍndiceNoBloco);
-            writer.Close();
-        }
-
         public BPos AdicionaInformação(TFLivro Informação)
         {
-            if (BlocoAtual != null)
+            BlocoAtual[uÍndiceNoBloco] = Informação;
+            uÍndiceNoBloco++;
+            BPos bPosAdicionado = new BPos(blocoCount, uÍndiceNoBloco);
+            if (uÍndiceNoBloco >= Constants.NodosPorBloco)
             {
-                BlocoAtual[uÍndiceNoBloco] = Informação;
-                BPos bPosAdicionado = new BPos(blocoCount, uÍndiceNoBloco);
-                uÍndiceNoBloco++;
-                if (uÍndiceNoBloco >= Constants.NodosPorBloco)
-                {
-                    SalvarBloco(Constants.DiretorioRaiz+Constants.blocLivrosFileName + blocoCount + ".blc");
-                    blocoCount++;
-                    uÍndiceNoBloco = 0;
-                    BlocoAtual = null;
-                    BlocoAtual = new TFLivro[Constants.NodosPorBloco];
-                }
-                return bPosAdicionado;
+                SalvarBloco(Constants.blocLivrosFileName + blocoCount + ".blc");
+                blocoCount++;
+                uÍndiceNoBloco = 0;
+                BlocoAtual = null;
+                BlocoAtual = new TFLivro[Constants.NodosPorBloco];
             }
-            return new BPos(-1, -1);
+            return bPosAdicionado;
         }
-
-        public TFLivro GetLivro(BPos pos) //pode jogar excessão
+        public TFLivro RetornaInformação(BPos Posição)
         {
-            TFLivro aux = new TFLivro();
-            int i;
-
-            BinaryReader reader = new BinaryReader(File.Open(Constants.DiretorioRaiz + Constants.blocLivrosFileName + pos.Bloco.ToString() + ".blc", FileMode.Open));
-            for (i = 0; i < pos.Offset; i++)
-                TFLivro.LeBinario(reader);
-            aux = TFLivro.LeBinario(reader);
-            reader.Close();
-
-            return aux;
+            TFLivro Livro = new TFLivro();
+            // carrega do binário tudo
+            return Livro;
         }
-
-        protected void SalvarBloco(string FileName)
+        private void SalvarBloco(string FileName)
         {
-            BinaryWriter writer = new BinaryWriter(File.Open(FileName, FileMode.OpenOrCreate));
-            for (int i = 0; i < uÍndiceNoBloco; i++)
-            {
-                TFLivro.GravaBinário(writer, BlocoAtual[i]);
-            }
-            writer.Close();
             // salva todo o BlocoAtual no disco
+        }
+        private void CarregarBuffer()
+        {
+            BlocoBuffer = new TFLivro[Constants.BlocoBufferSize][];
+            for (int i = 0; i < Constants.BlocoBufferSize; i++)
+                BlocoBuffer[i] = new TFLivro[Constants.NodosPorBloco];
+        }
+        private void DescarregaBuffer()
+        {
+            BlocoBuffer = null;
         }
     }
     // Blocos dos Periódicos
     public class TBlocoPeriódicosHandler
     {
-       private TFPeriódico[] BlocoAtual;
+        private TFPeriódico[] BlocoAtual;
+        private TFPeriódico[][] BlocoBuffer;
         protected int blocoCount;
         protected int uÍndiceNoBloco;
 
         public TBlocoPeriódicosHandler()
         {
             BlocoAtual = null;
+            BlocoBuffer = null;
             blocoCount = 0;
             uÍndiceNoBloco = 0;
         }
@@ -907,85 +704,58 @@ namespace VisualSort
         public void FinalizaGravação()
         {
             if (uÍndiceNoBloco > 0)
-                SalvarBloco(Constants.DiretorioRaiz+Constants.blocPeriódicosFileName + blocoCount + ".blc");
-            BlocoAtual = null;
+                SalvarBloco(Constants.blocPeriódicosFileName + blocoCount + ".blc");
             blocoCount++;
+            BlocoAtual = null;
         }
-
-        public static TBlocoPeriódicosHandler LeIndices(string arquivo)
-        {
-            BinaryReader reader = new BinaryReader(File.Open(arquivo, FileMode.Open));
-            TBlocoPeriódicosHandler handler = new TBlocoPeriódicosHandler();
-            handler.blocoCount = reader.ReadInt32();
-            handler.uÍndiceNoBloco = reader.ReadInt32();
-            reader.Close();
-            return handler;
-        }
-
-        public void GravaIndices(string arquivo)
-        {
-            BinaryWriter writer = new BinaryWriter(File.Open(arquivo, FileMode.Create));
-            writer.Write(this.blocoCount);
-            writer.Write(this.uÍndiceNoBloco);
-            writer.Close();
-        }
-
         public BPos AdicionaInformação(TFPeriódico Informação)
         {
-            if (BlocoAtual != null)
+            BlocoAtual[uÍndiceNoBloco] = Informação;
+            uÍndiceNoBloco++;
+            BPos bPosAdicionado = new BPos(blocoCount, uÍndiceNoBloco);
+            if (uÍndiceNoBloco >= Constants.NodosPorBloco)
             {
-                BlocoAtual[uÍndiceNoBloco] = Informação;
-                BPos bPosAdicionado = new BPos(blocoCount, uÍndiceNoBloco);
-                uÍndiceNoBloco++;
-                if (uÍndiceNoBloco >= Constants.NodosPorBloco)
-                {
-                    SalvarBloco(Constants.DiretorioRaiz+Constants.blocPeriódicosFileName + blocoCount + ".blc");
-                    blocoCount++;
-                    uÍndiceNoBloco = 0;
-                    BlocoAtual = null;
-                    BlocoAtual = new TFPeriódico[Constants.NodosPorBloco];
-                }
-                return bPosAdicionado;
+                SalvarBloco(Constants.blocPeriódicosFileName + blocoCount + ".blc");
+                blocoCount++;
+                uÍndiceNoBloco = 0;
+                BlocoAtual = null;
+                BlocoAtual = new TFPeriódico[Constants.NodosPorBloco];
             }
-            return new BPos(-1, -1);
+            return bPosAdicionado;
         }
-
-        public TFPeriódico GetPeriódico(BPos pos) //pode jogar excessão
+        public TFPeriódico RetornaInformação(BPos Posição)
         {
-            TFPeriódico aux = new TFPeriódico();
-            int i;
-
-            BinaryReader reader = new BinaryReader(File.Open(Constants.DiretorioRaiz + Constants.blocPeriódicosFileName + pos.Bloco.ToString() + ".blc", FileMode.Open));
-            for (i = 0; i < pos.Offset; i++)
-                TFPeriódico.LeBinario(reader);
-            aux = TFPeriódico.LeBinario(reader);
-            reader.Close();
-
-            return aux;
+            TFPeriódico Periódico = new TFPeriódico();
+            // carrega do binário tudo
+            return Periódico;
         }
-
-        protected void SalvarBloco(string FileName)
+        private void SalvarBloco(string FileName)
         {
-            BinaryWriter writer = new BinaryWriter(File.Open(FileName, FileMode.OpenOrCreate));
-            for (int i = 0; i < uÍndiceNoBloco; i++)
-            {
-                TFPeriódico.GravaBinário(writer, BlocoAtual[i]);
-            }
-            writer.Close();
             // salva todo o BlocoAtual no disco
         }
-
+        private void CarregarBuffer()
+        {
+            BlocoBuffer = new TFPeriódico[Constants.BlocoBufferSize][];
+            for (int i = 0; i < Constants.BlocoBufferSize; i++)
+                BlocoBuffer[i] = new TFPeriódico[Constants.NodosPorBloco];
+        }
+        private void DescarregaBuffer()
+        {
+            BlocoBuffer = null;
+        }
     }
     // Blocos dos Capítulos
     public class TBlocoCapítulosHandler
     {
-       private TFCap[] BlocoAtual;
+        private TFCap[] BlocoAtual;
+        private TFCap[][] BlocoBuffer;
         protected int blocoCount;
         protected int uÍndiceNoBloco;
 
         public TBlocoCapítulosHandler()
         {
             BlocoAtual = null;
+            BlocoBuffer = null;
             blocoCount = 0;
             uÍndiceNoBloco = 0;
         }
@@ -996,85 +766,58 @@ namespace VisualSort
         public void FinalizaGravação()
         {
             if (uÍndiceNoBloco > 0)
-                SalvarBloco(Constants.DiretorioRaiz+Constants.blocCapsFileName + blocoCount + ".blc");
-            BlocoAtual = null;
+                SalvarBloco(Constants.blocCapsFileName + blocoCount + ".blc");
             blocoCount++;
+            BlocoAtual = null;
         }
-
-        public static TBlocoCapítulosHandler LeIndices(string arquivo)
-        {
-            BinaryReader reader = new BinaryReader(File.Open(arquivo, FileMode.Open));
-            TBlocoCapítulosHandler handler = new TBlocoCapítulosHandler();
-            handler.blocoCount = reader.ReadInt32();
-            handler.uÍndiceNoBloco = reader.ReadInt32();
-            reader.Close();
-            return handler;
-        }
-
-        public void GravaIndices(string arquivo)
-        {
-            BinaryWriter writer = new BinaryWriter(File.Open(arquivo, FileMode.Create));
-            writer.Write(this.blocoCount);
-            writer.Write(this.uÍndiceNoBloco);
-            writer.Close();
-        }
-
         public BPos AdicionaInformação(TFCap Informação)
         {
-            if (BlocoAtual != null)
+            BlocoAtual[uÍndiceNoBloco] = Informação;
+            uÍndiceNoBloco++;
+            BPos bPosAdicionado = new BPos(blocoCount, uÍndiceNoBloco);
+            if (uÍndiceNoBloco >= Constants.NodosPorBloco)
             {
-                BlocoAtual[uÍndiceNoBloco] = Informação;
-                BPos bPosAdicionado = new BPos(blocoCount, uÍndiceNoBloco);
-                uÍndiceNoBloco++;
-                if (uÍndiceNoBloco >= Constants.NodosPorBloco)
-                {
-                    SalvarBloco(Constants.DiretorioRaiz+Constants.blocCapsFileName + blocoCount + ".blc");
-                    blocoCount++;
-                    uÍndiceNoBloco = 0;
-                    BlocoAtual = null;
-                    BlocoAtual = new TFCap[Constants.NodosPorBloco];
-                }
-                return bPosAdicionado;
+                SalvarBloco(Constants.blocCapsFileName + blocoCount + ".blc");
+                blocoCount++;
+                uÍndiceNoBloco = 0;
+                BlocoAtual = null;
+                BlocoAtual = new TFCap[Constants.NodosPorBloco];
             }
-            return new BPos(-1, -1);
+            return bPosAdicionado;
         }
-
-        public TFCap GetCapítulo(BPos pos) //pode jogar excessão
+        public TFCap RetornaInformação(BPos Posição)
         {
-            TFCap aux = new TFCap();
-            int i;
-
-            BinaryReader reader = new BinaryReader(File.Open(Constants.DiretorioRaiz + Constants.blocCapsFileName + pos.Bloco.ToString() + ".blc", FileMode.Open));
-            for (i = 0; i < pos.Offset; i++)
-                TFCap.LeBinario(reader);
-            aux = TFCap.LeBinario(reader);
-            reader.Close();
-
-            return aux;
+            TFCap Capítulo = new TFCap();
+            // carrega do binário tudo
+            return Capítulo;
         }
-
-        protected void SalvarBloco(string FileName)
+        private void SalvarBloco(string FileName)
         {
-            BinaryWriter writer = new BinaryWriter(File.Open(FileName, FileMode.OpenOrCreate));
-            for (int i = 0; i < uÍndiceNoBloco; i++)
-            {
-                TFCap.GravaBinário(writer, BlocoAtual[i]);
-            }
-            writer.Close();
             // salva todo o BlocoAtual no disco
         }
-
+        private void CarregarBuffer()
+        {
+            BlocoBuffer = new TFCap[Constants.BlocoBufferSize][];
+            for (int i = 0; i < Constants.BlocoBufferSize; i++)
+                BlocoBuffer[i] = new TFCap[Constants.NodosPorBloco];
+        }
+        private void DescarregaBuffer()
+        {
+            BlocoBuffer = null;
+        }
     }
     // Blocos das Conferências
     public class TBlocoConferênciasHandler
     {
-       private TFConferência[] BlocoAtual;
+        private TFConferência[] BlocoAtual;
+        private TFConferência[][] BlocoBuffer;
         protected int blocoCount;
         protected int uÍndiceNoBloco;
 
         public TBlocoConferênciasHandler()
         {
             BlocoAtual = null;
+            BlocoBuffer = null;
             blocoCount = 0;
             uÍndiceNoBloco = 0;
         }
@@ -1085,72 +828,106 @@ namespace VisualSort
         public void FinalizaGravação()
         {
             if (uÍndiceNoBloco > 0)
-                SalvarBloco(Constants.DiretorioRaiz+Constants.blocConferênciasFileName + blocoCount + ".blc");
-            BlocoAtual = null;
+                SalvarBloco(Constants.blocConferênciasFileName + blocoCount + ".blc");
             blocoCount++;
+            BlocoAtual = null;
         }
-
-        public static TBlocoConferênciasHandler LeIndices(string arquivo)
-        {
-            BinaryReader reader = new BinaryReader(File.Open(arquivo, FileMode.Open));
-            TBlocoConferênciasHandler handler = new TBlocoConferênciasHandler();
-            handler.blocoCount = reader.ReadInt32();
-            handler.uÍndiceNoBloco = reader.ReadInt32();
-            reader.Close();
-            return handler;
-        }
-
-        public void GravaIndices(string arquivo)
-        {
-            BinaryWriter writer = new BinaryWriter(File.Open(arquivo, FileMode.Create));
-            writer.Write(this.blocoCount);
-            writer.Write(this.uÍndiceNoBloco);
-            writer.Close();
-        }
-
         public BPos AdicionaInformação(TFConferência Informação)
         {
-            if (BlocoAtual != null)
+            BlocoAtual[uÍndiceNoBloco] = Informação;
+            uÍndiceNoBloco++;
+            BPos bPosAdicionado = new BPos(blocoCount, uÍndiceNoBloco);
+            if (uÍndiceNoBloco >= Constants.NodosPorBloco)
             {
-                BlocoAtual[uÍndiceNoBloco] = Informação;
-                BPos bPosAdicionado = new BPos(blocoCount, uÍndiceNoBloco);
-                uÍndiceNoBloco++;
-                if (uÍndiceNoBloco >= Constants.NodosPorBloco)
-                {
-                    SalvarBloco(Constants.DiretorioRaiz+Constants.blocConferênciasFileName + blocoCount + ".blc");
-                    blocoCount++;
-                    uÍndiceNoBloco = 0;
-                    BlocoAtual = null;
-                    BlocoAtual = new TFConferência[Constants.NodosPorBloco];
-                }
-                return bPosAdicionado;
+                SalvarBloco(Constants.blocConferênciasFileName + blocoCount + ".blc");
+                blocoCount++;
+                uÍndiceNoBloco = 0;
+                BlocoAtual = null;
+                BlocoAtual = new TFConferência[Constants.NodosPorBloco];
             }
-            return new BPos(-1, -1);
+            return bPosAdicionado;
         }
-
-        public TFConferência GetConferência(BPos pos) //pode jogar excessão
+        public TFConferência RetornaInformação(BPos Posição)
         {
-            TFConferência aux = new TFConferência();
-            int i;
-
-            BinaryReader reader = new BinaryReader(File.Open(Constants.DiretorioRaiz + Constants.blocConferênciasFileName + pos.Bloco.ToString() + ".blc", FileMode.Open));
-            for (i = 0; i < pos.Offset; i++)
-                TFConferência.LeBinario(reader);
-            aux = TFConferência.LeBinario(reader);
-            reader.Close();
-
-            return aux;
+            TFConferência Conferência = new TFConferência();
+            // carrega do binário tudo
+            return Conferência;
         }
-
-        protected void SalvarBloco(string FileName)
+        private void SalvarBloco(string FileName)
         {
-            BinaryWriter writer = new BinaryWriter(File.Open(FileName, FileMode.OpenOrCreate));
-            for (int i = 0; i < uÍndiceNoBloco; i++)
-            {
-                TFConferência.GravaBinário(writer, BlocoAtual[i]);
-            }
-            writer.Close();
             // salva todo o BlocoAtual no disco
+        }
+        private void CarregarBuffer()
+        {
+            BlocoBuffer = new TFConferência[Constants.BlocoBufferSize][];
+            for (int i = 0; i < Constants.BlocoBufferSize; i++)
+                BlocoBuffer[i] = new TFConferência[Constants.NodosPorBloco];
+        }
+        private void DescarregaBuffer()
+        {
+            BlocoBuffer = null;
+        }
+    }
+    // Blocos das Instituições
+    public class TBlocoInstituiçõesHandler
+    {
+        private TFInstituição[] BlocoAtual;
+        private TFInstituição[][] BlocoBuffer;
+        protected int blocoCount;
+        protected int uÍndiceNoBloco;
+
+        public TBlocoInstituiçõesHandler()
+        {
+            BlocoAtual = null;
+            BlocoBuffer = null;
+            blocoCount = 0;
+            uÍndiceNoBloco = 0;
+        }
+        public void InicializaGravação()
+        {
+            BlocoAtual = new TFInstituição[Constants.NodosPorBloco];
+        }
+        public void FinalizaGravação()
+        {
+            if (uÍndiceNoBloco > 0)
+                SalvarBloco(Constants.blocInstituiçõesFileName + blocoCount + ".blc");
+            blocoCount++;
+            BlocoAtual = null;
+        }
+        public BPos AdicionaInformação(TFInstituição Informação)
+        {
+            BlocoAtual[uÍndiceNoBloco] = Informação;
+            uÍndiceNoBloco++;
+            BPos bPosAdicionado = new BPos(blocoCount, uÍndiceNoBloco);
+            if (uÍndiceNoBloco >= Constants.NodosPorBloco)
+            {
+                SalvarBloco(Constants.blocInstituiçõesFileName + blocoCount + ".blc");
+                blocoCount++;
+                uÍndiceNoBloco = 0;
+                BlocoAtual = null;
+                BlocoAtual = new TFInstituição[Constants.NodosPorBloco];
+            }
+            return bPosAdicionado;
+        }
+        public TFInstituição RetornaInformação(BPos Posição)
+        {
+            TFInstituição Instiuição = new TFInstituição();
+            // carrega do binário tudo
+            return Instiuição;
+        }
+        private void SalvarBloco(string FileName)
+        {
+            // salva todo o BlocoAtual no disco
+        }
+        private void CarregarBuffer()
+        {
+            BlocoBuffer = new TFInstituição[Constants.BlocoBufferSize][];
+            for (int i = 0; i < Constants.BlocoBufferSize; i++)
+                BlocoBuffer[i] = new TFInstituição[Constants.NodosPorBloco];
+        }
+        private void DescarregaBuffer()
+        {
+            BlocoBuffer = null;
         }
     }
 
@@ -1162,7 +939,7 @@ namespace VisualSort
     public struct TPNodo
     {
         public Int64 Índice;            // Índice na correspondente lista
-        public int Tipo;                // Tipo (0= Pessoa; 1= Artigo; 2= Livro; 3= Periódico; 4= Capítulo; 5= Conferência)
+        public int Tipo;                // Tipo (0= Pessoa; 1= Artigo; 2= Livro; 3= Periódico; 4= Capítulo; 5= Conferência; 6= Instituição)
         
         // Constructor
         public TPNodo(Int64 Índice, int Tipo)
@@ -1181,21 +958,6 @@ namespace VisualSort
             if ((E1 == null) || (E2 == null)) return true;
             return !((E1.Tipo == E2.Tipo) && (E1.Índice == E2.Índice));
         }
-
-        public void GravaTPNodo(BinaryWriter writer)
-        {
-            writer.Write(this.Índice);
-            writer.Write(this.Tipo);
-        }
-
-        public static TPNodo LeTPNodo(BinaryReader reader)
-        {
-            TPNodo PNodo = new TPNodo();
-            PNodo.Índice = reader.ReadInt64();
-            PNodo.Tipo = reader.ReadInt32();
-            return PNodo;
-        }
-
         public override bool Equals(System.Object obj)
         {
             return false; 
@@ -1211,7 +973,7 @@ namespace VisualSort
     {
         public List<TPNodo> Ligações;   // As ligações do elemento com todos os outros
         public string Nome;             // Somente possui palavras suficentemente interessantes para pesquisa rápida
-        public string ISSN;        
+        public string Iniciais;         // Para ainda mais rápida pesquisa
         public BPos Data;               // Posição no disco (bloco e offset) de todos os dados
         public TPNodo Nodo;             // Informação sobre que tipo é e onde está na lista principal
         public TDrawNodo DrawNodo;      // Nodo de desenho (ponteiro)
@@ -1234,78 +996,12 @@ namespace VisualSort
             DrawNodo = null;
             Pesquisado = false;
         }
-        // Constructors
-        public TInfoNodo(string Nome,string ISSN, BPos Data)
-            : base()
-        {
-            /*foreach (string substr in Nome.Split(' '))
-            {
-                if (substr.Count() >= 3)
-                    this.Nome = String.Concat(this.Nome, substr, " ");
-                this.Iniciais = String.Concat(this.Iniciais, substr.Substring(0, 1));
-            }
-            if ((this.Nome == null) || (this.Nome.Length == 0))*/
-            this.Nome = Nome;
-            this.Data = Data;
-            this.ISSN = ISSN;
-            this.Nodo = new TPNodo(-1, -1);
-            this.Ligações = new List<TPNodo>();
-            DrawNodo = null;
-            Pesquisado = false;
-        }
-
-        public void GravaTInfoNodo(BinaryWriter writer)
-        {
-            writer.Write(this.Ligações.Count);
-            for (int i = 0; i < this.Ligações.Count; i++)
-                this.Ligações[i].GravaTPNodo(writer);
-            writer.Write(this.Nome);
-            if (this.ISSN != null)
-                writer.Write(this.ISSN);
-            else
-                writer.Write(string.Empty);
-            this.Data.GravaBPos(writer);
-            this.Nodo.GravaTPNodo(writer);
-
-        }
-
-        public static TInfoNodo LeTInfoNodo(BinaryReader reader)
-        {
-            TInfoNodo INodo = new TInfoNodo();
-            INodo.Ligações = new List<TPNodo>();
-            int aux = reader.ReadInt32();
-            for(int i = 0;i<aux;i++)
-                INodo.Ligações.Add(TPNodo.LeTPNodo(reader));
-            INodo.Nome = reader.ReadString();
-            INodo.ISSN = reader.ReadString();
-            INodo.Data = BPos.LeBPos(reader);
-            INodo.Nodo = TPNodo.LeTPNodo(reader);
-            INodo.Pesquisado = false;
-            return INodo;
-        }
 
         public TInfoNodo()
         {
             this.Data.Bloco = -1;
             this.Data.Offset = -1;
             DrawNodo = null;
-        }
-
-        public bool MesmoISSN(string ISSN)
-        {
-            if (this.ISSN == "i" || this.ISSN == null)
-                return false;
-            if (ISSN != null)
-            {
-                if (this.ISSN == ISSN)
-                    return true;
-                else
-                    return false;
-            }
-            else
-                return false;
-
-
         }
         // Função que verifica se o nome de entrada é o mesmo (ou seja, se todas as palavras de Value estão em Nome)
         public bool MesmoNome(string Value, bool ForceEqual)
@@ -1347,16 +1043,8 @@ namespace VisualSort
             // Para cada elemento
             foreach (TPNodo Nodo in Elementos)
             {
-                // Procura uma ligação com esses elementos
-                int Índice = -1;//Ligações.IndexOf(Nodo);
-                for (int i = 0; i < Ligações.Count; i++)
-                {
-                    if ((Ligações[i].Índice == Nodo.Índice) &&
-                        (Ligações[i].Tipo == Nodo.Tipo))
-                    {
-                        Índice = i;
-                    }
-                }
+                // Procura uma ligação com esses elementos e esse peso
+                int Índice = Ligações.IndexOf(Nodo);
                 if (Índice == -1)
                 {
                     // Se não havia, cria
@@ -1410,21 +1098,6 @@ namespace VisualSort
             }
             return Count - 1;
         }
-        // Cria um novo elemento dado somente um nome e um ISSN
-        public int NovoNodo(string Nome,string ISSN)
-        {
-            List<TInfoNodo> Lista = ProcuraNodoISSN(ISSN, true);
-            if (Lista.Count == 0)
-            {
-                Add(new TInfoNodo(Nome,ISSN, new BPos(-1, -1)));
-                this[this.Count - 1].Nodo = new TPNodo(this.Count - 1, Tipo);
-                return this.Count - 1;
-            }
-            else
-            {
-                return (int)Lista[0].Nodo.Índice;
-            }
-        }
         // Cria um novo elemento dado somente um nome
         public int NovoNodo(string Nome)
         {
@@ -1440,35 +1113,10 @@ namespace VisualSort
                 return (int)Lista[0].Nodo.Índice;
             }
         }
-
-        public void GravaTBigList(string arquivo)
-        {
-            BinaryWriter writer = new BinaryWriter(File.Open(arquivo, FileMode.Create));
-            writer.Write(Tipo);
-            writer.Write(this.Count);
-            for (int i = 0; i < this.Count; i++)
-                this[i].GravaTInfoNodo(writer);
-            writer.Close();
-        }
-         public static TBigList LeTBigList(string arquivo)
-         {
-             BinaryReader reader = new BinaryReader(File.Open(arquivo, FileMode.Open));
-             TBigList BigList = new TBigList(reader.ReadInt32());
-             int aux = reader.ReadInt32();
-             for (int i = 0; i < aux; i++)
-                 BigList.Add(TInfoNodo.LeTInfoNodo(reader));
-             reader.Close();
-                 return BigList;
-         }
-
-         // Funções para procurar todos os Elementos com dado Critério
-         public List<TInfoNodo> ProcuraNodo(string Nome, bool SomenteIgual)
+        // Funções para procurar todos os Elementos com dado Critério
+        public List<TInfoNodo> ProcuraNodo(string Nome, bool SomenteIgual)
         {
             return this.FindAll(p => p.MesmoNome(Nome, SomenteIgual));
-        }
-        public List<TInfoNodo> ProcuraNodoISSN(string ISSN, bool SomenteIgual)
-        {
-            return this.FindAll(p => p.MesmoISSN(ISSN));
         }
         public List<TInfoNodo> ProcuraNodo(int Tipo)
         {

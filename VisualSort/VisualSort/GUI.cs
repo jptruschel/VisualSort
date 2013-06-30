@@ -470,6 +470,7 @@ namespace VisualSort
             public int VerticalBarWidth;
             private float VerticalBarHeight;
             public bool MouseOverList, MouseOverBar, Clicking;
+            public bool ResizeOnMouse;
             private MouseState oldMouseState;
             private Vector2 FirstClickPos;
             private float prevWheelValue, currWheelValue;
@@ -491,6 +492,7 @@ namespace VisualSort
                 Enabled = true;
                 ItemIndex = -1;
                 xOffsetTextSize = 0f;
+                ResizeOnMouse = true;
                 //UpDownSize = new Vector2(16, 16);
             }
             public override void Update(MouseState mouseState)
@@ -523,17 +525,20 @@ namespace VisualSort
                              )).IsEmpty)
                     {
                         xOffsetTextSize = 0;
-                        foreach (string s in Items)
+                        if (ResizeOnMouse)
                         {
-                            float ns = Fonts[Font].MeasureString(s).X;
-                            if (ns > xOffsetTextSize)
-                                xOffsetTextSize = ns;
+                            foreach (string s in Items)
+                            {
+                                float ns = Fonts[Font].MeasureString(s).X;
+                                if (ns > xOffsetTextSize)
+                                    xOffsetTextSize = ns;
+                            }
+                            xOffsetTextSize = Math.Min(xOffsetTextSize, Size.X * 2);//AppGraphics.ScreenCenter.X);
+                            if (xOffsetTextSize < Size.X)
+                                xOffsetTextSize = 0;
+                            else
+                                xOffsetTextSize -= (Size.X - VerticalBarWidth - 5);
                         }
-                        xOffsetTextSize = Math.Min(xOffsetTextSize, AppGraphics.ScreenCenter.X);
-                        if (xOffsetTextSize < Size.X)
-                            xOffsetTextSize = 0;
-                        else
-                            xOffsetTextSize -= (Size.X - VerticalBarWidth - 5);
 
                         if (Rectangle.Intersect(
                         new Rectangle(
@@ -562,7 +567,8 @@ namespace VisualSort
                                         ItemIndex++;
                                     }
                                     ItemIndex -= 2;
-                                    OnClick(ItemIndex);
+                                    if (OnClick != null)
+                                        OnClick(ItemIndex);
                                 }
                         }
                         else
@@ -637,7 +643,6 @@ namespace VisualSort
                         }                
                     }
                 }
-
                 Offset = Math.Min(Offset, Items.Count - ionView);
                 Offset = Math.Max(Offset, 0);
                 oldMouseState = mouseState;
@@ -858,7 +863,7 @@ namespace VisualSort
             public Color backgroundColor;
             public bool transparentBackground;
             private int cursorTimer;
-            public bool hasFocus, mouseOver;
+            public bool hasFocus, mouseOver, ReadOnly, ResizeOnMouse;
             private bool drawCursor;
             private MouseState oldMouseState;
             private KeyboardState keyboardState, oldkeyboardState;
@@ -886,6 +891,8 @@ namespace VisualSort
                 cursorTimer = 0;
                 Visible = true;
                 Enabled = true;
+                ReadOnly = false;
+                ResizeOnMouse = true;
             }
             public override void Update(MouseState mouseState)
             {
@@ -899,23 +906,19 @@ namespace VisualSort
                                 (int)(this.Pos.Y + Parent.Pos.Y),
                                 (int)(xDrawSize),
                                 (int)(Size.Y)),
-                             new Rectangle(
-                                 (int)mouseState.X,
-                                 (int)mouseState.Y,
-                                 1, 1
-                                 )).IsEmpty)
-                    {
+                                new Rectangle(
+                                    (int)mouseState.X,
+                                    (int)mouseState.Y,
+                                    1, 1
+                                    )).IsEmpty)
                         mouseOver = true;
-                    }
                     else
-                    {
                         mouseOver = false;
-                    }
 
                     if ((mouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed) &&
                             (oldMouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Released))
                     {
-                        if (!Rectangle.Intersect(
+                        if (mouseOver) /*(!Rectangle.Intersect(
                             new Rectangle(
                                 (int)(this.Pos.X + Parent.Pos.X),
                                 (int)(this.Pos.Y + Parent.Pos.Y),
@@ -925,7 +928,7 @@ namespace VisualSort
                                  (int)mouseState.X,
                                  (int)mouseState.Y,
                                  1, 1
-                                 )).IsEmpty)
+                                 )).IsEmpty)*/
                         {
                             if (!hasFocus)
                             {
@@ -962,142 +965,146 @@ namespace VisualSort
                     }
                     oldMouseState = mouseState;
 
+
                     keyboardState = Keyboard.GetState();
-                    if (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.CapsLock))
-                        if (oldkeyboardState.IsKeyUp(Microsoft.Xna.Framework.Input.Keys.CapsLock))
-                            capsLocked = !capsLocked;
-                    if (hasFocus)
+                    if (!ReadOnly)
                     {
-                        if (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Enter))
+                        if (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.CapsLock))
+                            if (oldkeyboardState.IsKeyUp(Microsoft.Xna.Framework.Input.Keys.CapsLock))
+                                capsLocked = !capsLocked;
+                        if (hasFocus)
                         {
-                            hasFocus = false;
-                            SelectAll = false;
-                            drawCursor = false;
-                        }
-                        if (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Left))
-                        {
-                            if (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftShift) ||
-                                keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.RightShift))
+                            if (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Enter))
                             {
+                                hasFocus = false;
+                                SelectAll = false;
+                                drawCursor = false;
                             }
-                            else
+                            if (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Left))
                             {
-                                if (oldkeyboardState.IsKeyUp(Microsoft.Xna.Framework.Input.Keys.Left))
+                                if (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftShift) ||
+                                    keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.RightShift))
                                 {
-                                    samekeyTimer = 0;
-                                    cursorPos--;
-                                    cursorTimer = 0;
-                                    drawCursor = true;
-                                    SelectAll = false;
                                 }
                                 else
-                                    samekeyTimer++;
-
-                                if (samekeyTimer > 30)
                                 {
-                                    cursorPos--;
-                                    samekeyTimer = 25;
-                                    cursorTimer = 0;
-                                    drawCursor = true;
-                                    SelectAll = false;
-                                }
-                            }
-                        }
-                        if (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Right))
-                        {
-                            if (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftShift) ||
-                                keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.RightShift))
-                            {
-                            }
-                            else
-                            {
-                                if (oldkeyboardState.IsKeyUp(Microsoft.Xna.Framework.Input.Keys.Right))
-                                {
-                                    samekeyTimer = 0;
-                                    cursorPos++;
-                                    cursorTimer = 0;
-                                    drawCursor = true;
-                                    SelectAll = false;
-                                }
-                                else
-                                    samekeyTimer++;
-
-                                if (samekeyTimer > 30)
-                                {
-                                    cursorPos++;
-                                    samekeyTimer = 20;
-                                    cursorTimer = 0;
-                                    drawCursor = true;
-                                    SelectAll = false;
-                                }
-                            }
-                        }
-
-                        foreach (Microsoft.Xna.Framework.Input.Keys key in keyboardState.GetPressedKeys())
-                        {
-                            if (oldkeyboardState.IsKeyDown(key))
-                                samekeyTimer++;
-                            if ((oldkeyboardState.IsKeyUp(key) || (samekeyTimer > 20)) && (
-                                (key != Microsoft.Xna.Framework.Input.Keys.Left) && (key != Microsoft.Xna.Framework.Input.Keys.Right) &&
-                                (key != Microsoft.Xna.Framework.Input.Keys.LeftShift) && (key != Microsoft.Xna.Framework.Input.Keys.RightShift)
-                                ))
-                            {
-                                if (key == Microsoft.Xna.Framework.Input.Keys.Back)
-                                {
-                                    if (SelectAll)
+                                    if (oldkeyboardState.IsKeyUp(Microsoft.Xna.Framework.Input.Keys.Left))
                                     {
-                                        Text = "";
-                                        cursorPos = 0;
+                                        samekeyTimer = 0;
+                                        cursorPos--;
+                                        cursorTimer = 0;
+                                        drawCursor = true;
                                         SelectAll = false;
                                     }
                                     else
-                                        if (cursorPos > 0)
-                                        {
-                                            Text = Text.Remove(cursorPos - 1, 1);
-                                            cursorPos--;
-                                        }
+                                        samekeyTimer++;
+
+                                    if (samekeyTimer > 30)
+                                    {
+                                        cursorPos--;
+                                        samekeyTimer = 25;
+                                        cursorTimer = 0;
+                                        drawCursor = true;
+                                        SelectAll = false;
+                                    }
+                                }
+                            }
+                            if (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Right))
+                            {
+                                if (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftShift) ||
+                                    keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.RightShift))
+                                {
                                 }
                                 else
                                 {
-                                    string adds = " ";
-                                    if (key == Microsoft.Xna.Framework.Input.Keys.Space)
+                                    if (oldkeyboardState.IsKeyUp(Microsoft.Xna.Framework.Input.Keys.Right))
+                                    {
+                                        samekeyTimer = 0;
+                                        cursorPos++;
+                                        cursorTimer = 0;
+                                        drawCursor = true;
+                                        SelectAll = false;
+                                    }
+                                    else
+                                        samekeyTimer++;
+
+                                    if (samekeyTimer > 30)
+                                    {
+                                        cursorPos++;
+                                        samekeyTimer = 20;
+                                        cursorTimer = 0;
+                                        drawCursor = true;
+                                        SelectAll = false;
+                                    }
+                                }
+                            }
+
+                            foreach (Microsoft.Xna.Framework.Input.Keys key in keyboardState.GetPressedKeys())
+                            {
+                                if (oldkeyboardState.IsKeyDown(key))
+                                    samekeyTimer++;
+                                if ((oldkeyboardState.IsKeyUp(key) || (samekeyTimer > 20)) && (
+                                    (key != Microsoft.Xna.Framework.Input.Keys.Left) && (key != Microsoft.Xna.Framework.Input.Keys.Right) &&
+                                    (key != Microsoft.Xna.Framework.Input.Keys.LeftShift) && (key != Microsoft.Xna.Framework.Input.Keys.RightShift)
+                                    ))
+                                {
+                                    if (key == Microsoft.Xna.Framework.Input.Keys.Back)
                                     {
                                         if (SelectAll)
                                         {
-                                            Text = adds;
+                                            Text = "";
                                             cursorPos = 0;
                                             SelectAll = false;
                                         }
-                                        Text = Text.Insert(cursorPos, adds);
+                                        else
+                                            if (cursorPos > 0)
+                                            {
+                                                Text = Text.Remove(cursorPos - 1, 1);
+                                                cursorPos--;
+                                            }
                                     }
                                     else
                                     {
-                                        adds = CharFromKey(key, keyboardState, capsLocked);
-                                        Text = Text.Insert(cursorPos, adds);
-                                        if ((SelectAll) && (adds.Length > 0))
+                                        string adds = " ";
+                                        if (key == Microsoft.Xna.Framework.Input.Keys.Space)
                                         {
-                                            Text = adds;
-                                            cursorPos = 0;
-                                            SelectAll = false;
+                                            if (SelectAll)
+                                            {
+                                                Text = adds;
+                                                cursorPos = 0;
+                                                SelectAll = false;
+                                            }
+                                            Text = Text.Insert(cursorPos, adds);
                                         }
+                                        else
+                                        {
+                                            adds = CharFromKey(key, keyboardState, capsLocked);
+                                            Text = Text.Insert(cursorPos, adds);
+                                            if ((SelectAll) && (adds.Length > 0))
+                                            {
+                                                Text = adds;
+                                                cursorPos = 0;
+                                                SelectAll = false;
+                                            }
+                                        }
+                                        cursorPos += adds.Length;
                                     }
-                                    cursorPos += adds.Length;
-                                }
-                                if (key == sameKey)
-                                    samekeyTimer = 12;
-                                else
-                                {
-                                    samekeyTimer = 0;
-                                    sameKey = key;
+                                    if (key == sameKey)
+                                        samekeyTimer = 12;
+                                    else
+                                    {
+                                        samekeyTimer = 0;
+                                        sameKey = key;
+                                    }
                                 }
                             }
-                        }
 
-                        cursorTimer++;
-                        if (cursorTimer > 25)
-                        {
-                            drawCursor = !drawCursor;
-                            cursorTimer = 0;
+                            cursorTimer++;
+                            if (cursorTimer > 25)
+                            {
+                                drawCursor = !drawCursor;
+                                cursorTimer = 0;
+                            }
                         }
                     }
                 }
@@ -1107,7 +1114,7 @@ namespace VisualSort
                 cursorPos = Math.Min(cursorPos, Text.Length);
                 cursorPos = Math.Max(cursorPos, 0);
 
-                if ((hasFocus) || (mouseOver))
+                if (((hasFocus) || (mouseOver)) && (ResizeOnMouse))
                 {
                     xDrawSize = Math.Max((int)GUI.Fonts[Font].MeasureString(Text).X + 3, (int)Size.X);
                     textDLength = Text.Length;
@@ -1128,6 +1135,18 @@ namespace VisualSort
             {
                 switch (key)
                 {
+                    case (Microsoft.Xna.Framework.Input.Keys.OemCloseBrackets):
+                        if ((keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftShift))
+                            || (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.RightShift)) || capsLocked)
+                            return "'";
+                        else
+                            return "'";
+                    case (Microsoft.Xna.Framework.Input.Keys.OemTilde):
+                        if ((keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftShift))
+                            || (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.RightShift)) || capsLocked)
+                            return "'";
+                        else
+                            return "'";
                     case (Microsoft.Xna.Framework.Input.Keys.A):
                         if ((keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.LeftShift))
                             || (keyboardState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.RightShift)) || capsLocked)
@@ -1332,32 +1351,289 @@ namespace VisualSort
             {
                 base.Draw(spriteBatch);
 
-                if (!transparentBackground)
+               // if (ResizeSide == 1)
+                {
+                    if (!transparentBackground)
+                        spriteBatch.Draw(wBox,
+                            new Rectangle(
+                                (int)Pos.X + (int)Parent.Pos.X,
+                                (int)Pos.Y + (int)Parent.Pos.Y,
+                                (int)xDrawSize,
+                                (int)Size.Y),
+                            null, backgroundColor, 0f, Vector2.Zero, SpriteEffects.None, 0f);
+                    if (SelectAll)
+                        spriteBatch.Draw(wBox,
+                            new Rectangle(
+                                (int)Pos.X + (int)Parent.Pos.X + 2,
+                                (int)Pos.Y + (int)Parent.Pos.Y + 2,
+                                (int)GUI.Fonts[Font].MeasureString(Text.Substring(0, cursorPos)).X - 2,
+                                (int)Size.Y - 5),
+                            null, Color.LightBlue, 0f, Vector2.Zero, SpriteEffects.None, 0f);
+                    Color cor = TextColor;
+                    if (!Enabled)
+                        cor = Color.Gray;
+                    if ((textDLength < Text.Length) && (xDrawSize <= Size.X))
+                        spriteBatch.DrawString(GUI.Fonts[Font], Text.Substring(0, textDLength - 2) + "...", Pos + Parent.Pos, cor);
+                    else
+                        spriteBatch.DrawString(GUI.Fonts[Font], Text.Substring(0, textDLength), Pos + Parent.Pos, cor);
+                    if ((drawCursor) && (!SelectAll))
+                        spriteBatch.DrawString(GUI.Fonts[Font], "|", Pos + Parent.Pos + new Vector2(GUI.Fonts[Font].MeasureString(Text.Substring(0, cursorPos)).X - 2, -2), cor);
+                }
+            }
+        }
+        // Um Memo
+        public class TGUIMemo : GUI.TGUIObject
+        {
+            public List<string> Items;
+            public int Offset;
+            private int ionView;
+            private int yPerLine;
+            public Func<int, bool> OnClick;
+            public Color color, verticalBarColor;
+            public int VerticalBarWidth;
+            private float VerticalBarHeight;
+            public bool MouseOverList, MouseOverBar, Clicking;
+            private MouseState oldMouseState;
+            private Vector2 FirstClickPos;
+            private float prevWheelValue, currWheelValue;
+            public float xOffsetTextSize;
+            public int listIndex;
+            public TGUIMemo(Vector2 Pos, Vector2 Size)
+                : base(Pos, Size)
+            {
+                Font = 2;
+                Items = new List<string>();
+                Offset = 0;
+                yPerLine = -1;
+                color = Color.White;
+                TextColor = Color.Black;
+                verticalBarColor = Color.SlateGray;
+                VerticalBarWidth = 16;
+                currWheelValue = 0f;
+                prevWheelValue = 0f;
+                Visible = true;
+                Enabled = true;
+                xOffsetTextSize = 0f;
+                listIndex = 0;
+            }
+            public override void Update(MouseState mouseState)
+            {
+                base.Update(mouseState);
+                if (yPerLine == -1)
+                {
+                    yPerLine = (int)(Fonts[Font].MeasureString("aAjgy1234567890").Y);
+                    ionView = (int)(Size.Y / yPerLine);
+                }
+                VerticalBarHeight = (int)(Math.Pow((Size.Y), 2) / (ionView * Items.Count));
+                if (VerticalBarHeight > Size.Y)
+                    VerticalBarHeight = Size.Y - 2;
+
+                prevWheelValue = currWheelValue;
+                currWheelValue = mouseState.ScrollWheelValue;
+
+                if (Enabled)
+                {
+                    if (!Rectangle.Intersect(
+                        new Rectangle(
+                            (int)(this.Pos.X + Parent.Pos.X),
+                            (int)(this.Pos.Y + Parent.Pos.Y - 5),
+                            (int)(Size.X + xOffsetTextSize + 10),
+                            (int)(Size.Y)),
+                         new Rectangle(
+                             (int)mouseState.X,
+                             (int)mouseState.Y,
+                             1, 1
+                             )).IsEmpty)
+                    {
+                        xOffsetTextSize = 0;
+                        foreach (string s in Items)
+                        {
+                            float ns = Fonts[Font].MeasureString(s).X;
+                            if (ns > xOffsetTextSize)
+                                xOffsetTextSize = ns;
+                        }
+                        xOffsetTextSize = Math.Min(xOffsetTextSize, Size.X * 2);//AppGraphics.ScreenCenter.X);
+                        if (xOffsetTextSize < Size.X)
+                            xOffsetTextSize = 0;
+                        else
+                            xOffsetTextSize -= (Size.X - VerticalBarWidth - 5);
+
+                        if (Rectangle.Intersect(
+                        new Rectangle(
+                                    (int)(Pos.X + Parent.Pos.X + xOffsetTextSize + Size.X - VerticalBarWidth - 1),
+                                    (int)((Pos.Y + Parent.Pos.Y + 1)) - 5,
+                                    (int)VerticalBarWidth,
+                                    (int)Size.Y),
+                         new Rectangle(
+                             (int)mouseState.X,
+                             (int)mouseState.Y,
+                             1, 1
+                             )).IsEmpty)
+                        {
+                            MouseOverList = true;
+                            MouseOverBar = false;
+                        }
+                        else
+                        {
+                            if ((Rectangle.Intersect(
+                                new Rectangle(
+                                            (int)(Pos.X + Parent.Pos.X + xOffsetTextSize + Size.X - VerticalBarWidth - 1),
+                                            (int)((Pos.Y + Parent.Pos.Y)) - 55,
+                                            (int)VerticalBarWidth,
+                                            (int)VerticalBarHeight + 10),
+                                 new Rectangle(
+                                     (int)mouseState.X,
+                                     (int)mouseState.Y,
+                                     1, 1
+                                     )).IsEmpty)
+                                && (((mouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed) &&
+                                (oldMouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Released))))
+                            {
+                                Offset = (int)
+                                    -((Pos.Y + Parent.Pos.Y - mouseState.Y) / ((Size.Y - 2) / Items.Count));
+                            }
+                            MouseOverBar = true;
+                            MouseOverList = false;
+                        }
+                        if ((mouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed) &&
+                            (oldMouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Released) &&
+                            (MouseOverBar))
+                        {
+                            Clicking = true;
+                            FirstClickPos = new Vector2(mouseState.X, mouseState.Y);
+                        }
+                        Offset += (int)((prevWheelValue - currWheelValue) * 0.10);
+                    }
+                    else
+                    {
+                        if (Clicking == false)
+                        {
+                            xOffsetTextSize = 0;
+                            MouseOverBar = false;
+                            MouseOverList = false;
+                        }
+                    }
+
+                    if (mouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Released)
+                    {
+                        Clicking = false;
+                    }
+
+                    if ((Clicking) && (MouseOverBar || MouseOverList))
+                    {
+                        double Dif = Math.Abs((FirstClickPos.Y - mouseState.Y)) / ((Size.Y - VerticalBarHeight) / (Items.Count - ionView));
+                        if (Dif > 1)
+                        {
+                            if ((FirstClickPos.Y - mouseState.Y) > 0)
+                            {
+                                while (Math.Floor(Dif) > 1)
+                                {
+                                    Offset--;
+                                    FirstClickPos.Y -= (Size.Y - VerticalBarHeight) / (Items.Count - ionView);
+                                    Dif--;
+                                }
+                            }
+                            else
+                            {
+                                while (Math.Floor(Dif) > 1)
+                                {
+                                    Offset++;
+                                    FirstClickPos.Y += (Size.Y - VerticalBarHeight) / (Items.Count - ionView);
+                                    Dif--;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Offset = Math.Min(Offset, Items.Count - ionView);
+                Offset = Math.Max(Offset, 0);
+                oldMouseState = mouseState;
+            }
+            public override void Draw(SpriteBatch spriteBatch)
+            {
+                base.Draw(spriteBatch);
+
+                if (yPerLine != -1)
+                {
                     spriteBatch.Draw(wBox,
                         new Rectangle(
                             (int)Pos.X + (int)Parent.Pos.X,
                             (int)Pos.Y + (int)Parent.Pos.Y,
-                            (int)xDrawSize,
+                            (int)(Size.X + xOffsetTextSize),
                             (int)Size.Y),
-                        null, backgroundColor, 0f, Vector2.Zero, SpriteEffects.None, 0f);
-                if (SelectAll)
-                    spriteBatch.Draw(wBox,
-                        new Rectangle(
-                            (int)Pos.X + (int)Parent.Pos.X + 2,
-                            (int)Pos.Y + (int)Parent.Pos.Y + 2,
-                            (int)GUI.Fonts[Font].MeasureString(Text.Substring(0, cursorPos)).X - 2,
-                            (int)Size.Y-5),
-                        null, Color.LightBlue, 0f, Vector2.Zero, SpriteEffects.None, 0f);
-                Color cor = TextColor;
-                if (!Enabled)
-                    cor = Color.Gray;
-                if ((textDLength < Text.Length) && (xDrawSize <= Size.X))
-                    spriteBatch.DrawString(GUI.Fonts[Font], Text.Substring(0, textDLength - 2) + "...", Pos + Parent.Pos, cor);
-                else
-                    spriteBatch.DrawString(GUI.Fonts[Font], Text.Substring(0, textDLength), Pos + Parent.Pos, cor);
-                if ((drawCursor) && (!SelectAll))
-                    spriteBatch.DrawString(GUI.Fonts[Font], "|", Pos + Parent.Pos + new Vector2(GUI.Fonts[Font].MeasureString(Text.Substring(0, cursorPos)).X - 2, -2), cor);
+                        null, color, 0f, Vector2.Zero, SpriteEffects.None, 0f);
+                    for (int i = Offset; i < Math.Min(Offset + ionView, Items.Count); i++)
+                    {
+                        Vector2 tPos = Pos + Parent.Pos + new Vector2(2, (i - Offset) * yPerLine);
+                        Color cor = TextColor;
+                        if (!Enabled)
+                            cor = Color.Gray;
+
+                        int j = 0;
+                        while ((j < Items[i].Length) &&
+                            (GUI.Fonts[Font].MeasureString(Items[i].Substring(0, j)).X < Size.X + xOffsetTextSize - VerticalBarWidth))
+                            j++;
+                        if (j < Items[i].Length)
+                        {
+                            j -= 4;
+                            spriteBatch.DrawString(
+                                GUI.Fonts[Font],
+                                Items[i].Substring(0, j) + "...",
+                                tPos,
+                                cor);
+                        }
+                        else
+                            spriteBatch.DrawString(
+                                GUI.Fonts[Font],
+                                Items[i].Substring(0, j),
+                                tPos,
+                                cor);
+                    }
+                    if (MouseOverBar)
+                        spriteBatch.Draw(wBox,
+                            new Rectangle(
+                                (int)(Pos.X + Parent.Pos.X + Size.X + xOffsetTextSize - VerticalBarWidth - 1),
+                                (int)((Pos.Y + Parent.Pos.Y + 1) + (Offset / ((Items.Count - ionView) / (Size.Y - 2 - VerticalBarHeight)))),
+                                (int)VerticalBarWidth,
+                                (int)VerticalBarHeight),
+                            null, verticalBarColor, 0f, Vector2.Zero, SpriteEffects.None, 0f);
+                    else
+                        spriteBatch.Draw(wBox,
+                            new Rectangle(
+                                (int)(Pos.X + Parent.Pos.X + Size.X + xOffsetTextSize - VerticalBarWidth - 1),
+                                (int)((Pos.Y + Parent.Pos.Y + 1) + (Offset / ((Items.Count - ionView) / (Size.Y - 2 - VerticalBarHeight)))),
+                                (int)VerticalBarWidth,
+                                (int)VerticalBarHeight),
+                            null, verticalBarColor * 0.72f, 0f, Vector2.Zero, SpriteEffects.None, 0f);
+
+                }
             }
+            public void Add(string Text, bool Ident)
+            {
+                Items.Add("");
+                foreach (string Subs in Text.Split(' '))
+                {
+                    if (Fonts[Font].MeasureString(Items[listIndex] + Subs + " ").X < Size.X - VerticalBarWidth)
+                    {
+                        Items[listIndex] += Subs + " ";
+                    }
+                    else
+                    {
+                        if (Ident)
+                            Items.Add(" " + Subs + " ");
+                        else
+                            Items.Add(Subs + " ");
+                        listIndex++;
+                    }
+                }
+                listIndex++;
+            }
+        public void Clear()
+        {
+            Items.Clear();
+            listIndex = 0;
+        }
         }
         // Uma imagem (textura 2d)
         public class TGUIImage : GUI.TGUIObject

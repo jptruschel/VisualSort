@@ -96,7 +96,7 @@ namespace VisualSort
                 else
                     if (this.Selected)
                         if (AppGraphics.MaxNodos[Program.maxNodoSelecionado].Loops > 0)
-                            this.Color = AppGraphics.GetColorFromType(this.InfoNodo.Nodo.Tipo) * (1 / AppGraphics.MaxNodos[Program.maxNodoSelecionado].Loops);
+                            this.Color = AppGraphics.GetColorFromType(this.InfoNodo.Nodo.Tipo); //* (1 / AppGraphics.MaxNodos[Program.maxNodoSelecionado].Loops);
                         else
                             this.Color = AppGraphics.GetColorFromType(this.InfoNodo.Nodo.Tipo);
                     else
@@ -271,41 +271,42 @@ namespace VisualSort
             float NodeAngleDisplace = 0f;
             // Varre todos os nodos que tem ligação, colocando eles em lugares próprios de serem desenhados
             for (int i = 0; i < MainNodo.Ligações.Count; i++)
-            {
-                TInfoNodo NodoL = Program.GetNodoFromLists(MainNodo.Ligações[i]);
-                NodoL.DrawNodo = new TDrawNodo(NodoL);
-                float cosRadians = (float)Math.Cos(NodeAngleDisplace);
-                float sinRadians = (float)Math.Sin(NodeAngleDisplace);
-                Vector2 NewPosDis = new Vector2(
-                        NodeDisplace.X * cosRadians - NodeDisplace.Y * sinRadians,
-                        NodeDisplace.X * sinRadians + NodeDisplace.Y * cosRadians);
-                NodoL.DrawNodo.MoveTo(Pos);
-                NodoL.DrawNodo.AccelerateTo(
-                    Pos + NewPosDis, 10f);
-                //if (Vector2.Distance(NewPosDis, Pos) > Vector2.Distance(NewPosDis, Size))
+                if (Renderer.GraphViewCheckBoxs[MainNodo.Ligações[i].Tipo].Checked)
+                {
+                    TInfoNodo NodoL = Program.GetNodoFromLists(MainNodo.Ligações[i]);
+                    NodoL.DrawNodo = new TDrawNodo(NodoL);
+                    float cosRadians = (float)Math.Cos(NodeAngleDisplace);
+                    float sinRadians = (float)Math.Sin(NodeAngleDisplace);
+                    Vector2 NewPosDis = new Vector2(
+                            NodeDisplace.X * cosRadians - NodeDisplace.Y * sinRadians,
+                            NodeDisplace.X * sinRadians + NodeDisplace.Y * cosRadians);
+                    NodoL.DrawNodo.MoveTo(Pos);
+                    NodoL.DrawNodo.AccelerateTo(
+                        Pos + NewPosDis, 10f);
+                    //if (Vector2.Distance(NewPosDis, Pos) > Vector2.Distance(NewPosDis, Size))
 
-                NodeAngleDisplace += (float)(-Math.PI / (8/**/ * (Loops + 1)));
-                if (NodeAngleDisplace <= -(Math.PI))
-                {
-                    NodeDisplace += new Vector2(10f / (Loops + 1), 1f);//new Vector2(6f, 1f + ((Math.Min(50, Loops)) * (1.0f))); //* ((Math.Min(10, Loops)))));
+                    NodeAngleDisplace += (float)(-Math.PI / (8/**/ * (Loops + 1)));
+                    if (NodeAngleDisplace <= -(Math.PI))
+                    {
+                        NodeDisplace += new Vector2(10f / (Loops + 1), 1f);//new Vector2(6f, 1f + ((Math.Min(50, Loops)) * (1.0f))); //* ((Math.Min(10, Loops)))));
+                    }
+                    if (NodeAngleDisplace < -(1.999 * Math.PI))
+                    {
+                        //NodeDisplace += new Vector2(48f, 16f);
+                        NodeAngleDisplace = 0.0f;
+                        Loops++;
+                    }
+                    Size = new Vector2((NewPosDis.Length()*2) + (AppGraphics.DefaultNodeSize),
+                        (NewPosDis.Length() * 2) + (AppGraphics.DefaultNodeSize));
+                    // Adiciona a linha
+                    Lines.Add((int)AppGraphics.DPrimitives.AddLine(
+                        Pos,
+                        NodoL.DrawNodo.Pos,
+                        MainNodo.DrawNodo.Color * 0.5f,
+                        NodoL.DrawNodo.Color * 0.5f));
+                    // Adiciona o nodo na lista de nodos
+                    Nodos.Add(NodoL.DrawNodo);
                 }
-                if (NodeAngleDisplace < -(1.999 * Math.PI))
-                {
-                    //NodeDisplace += new Vector2(48f, 16f);
-                    NodeAngleDisplace = 0.0f;
-                    Loops++;
-                }
-                Size = new Vector2((NewPosDis.Length()*2) + (AppGraphics.DefaultNodeSize),
-                    (NewPosDis.Length() * 2) + (AppGraphics.DefaultNodeSize));
-                // Adiciona a linha
-                Lines.Add((int)AppGraphics.DPrimitives.AddLine(
-                    Pos,
-                    NodoL.DrawNodo.Pos,
-                    MainNodo.DrawNodo.Color * 0.5f,
-                    NodoL.DrawNodo.Color * 0.5f));
-                // Adiciona o nodo na lista de nodos
-                Nodos.Add(NodoL.DrawNodo);
-            }
         }
         // Atualiza a posição das linhas
         public void Update(GameTime gameTime, bool UpdateNodesMouse)
@@ -753,7 +754,7 @@ namespace VisualSort
                 for (int i = Anterior + 1; i < MaxNodos.Count; i++)
                     MaxNodos.RemoveAt(Anterior+1);
             }
-            
+            CarregaInformações(Nodo);
             // Cria o novo na posição 0,0
             AppGraphics.MaxNodos.Add(
                 new TDrawMaxNodo(Nodo, new Vector2(0, 0)));
@@ -768,7 +769,259 @@ namespace VisualSort
         // Carrega as informações de um nodo na aba da direita
         public static void CarregaInformações(TPNodo Nodo)
         {
-
+            if (Nodo != null)
+            {
+                TInfoNodo iNodo = Program.GetNodoFromLists(Nodo);
+                Renderer.rInfoEditNome.Text = iNodo.Nome;
+                switch (Nodo.Tipo)
+                {
+                    // Pessoa
+                    case 0:
+                        {
+                            Renderer.rInfoInfos.Clear();
+                            Renderer.rInfoInfos.Add("Pessoa", true);
+                            Renderer.rInfoLista.Visible = true;
+                            Renderer.rInfoLista.Items.Clear();
+                            Renderer.rInfoOrgOpenPanel.Visible = true;
+                            Renderer.rInfoTipoLista.Visible = true;
+                            Renderer.rInfoTipoLista.Text = "Artigos: ";
+                            TFPessoa Information = new TFPessoa();
+                            bool Go = true;
+                            try
+                            {
+                                Information = Program.fPessoas.GetPessoa(iNodo.Data);
+                            }
+                            catch
+                            {
+                                Go = false;
+                            }
+                            if (Go)
+                            {
+                                Renderer.rInfoInfos.Add("País: " + Information.País, true);
+                                Renderer.rInfoInfos.Add("Resumo: " + Information.TextoResumo, true);
+                            }
+                            else
+                            {
+                                Renderer.rInfoInfos.Add(" Informações adicionais não disponíveis!", true);
+                            }
+                            break;
+                        }
+                    // Artigo
+                    case 1:
+                        {
+                            Renderer.rInfoInfos.Clear();
+                            Renderer.rInfoInfos.Add("Artigo", true);
+                            Renderer.rInfoLista.Visible = true;
+                            Renderer.rInfoLista.Items.Clear();
+                            Renderer.rInfoOrgOpenPanel.Visible = false;
+                            Renderer.rInfoTipoLista.Visible = true;
+                            Renderer.rInfoTipoLista.Text = "Pesquisadores: ";
+                            TFArtigo Information = new TFArtigo();
+                            bool Go = true;
+                            try
+                            {
+                                Information = Program.fArtigos.GetArtigo(iNodo.Data);
+                            }
+                            catch
+                            {
+                                Go = false;
+                            }
+                            if (Go)
+                            {
+                                Renderer.rInfoInfos.Add("Título: " + Information.Título, true);
+                                if (Information.ISSN == "i")
+                                {
+                                    Renderer.rInfoInfos.Add("ISSN: N/A", true);
+                                    Renderer.rInfoInfos.Add("Conferência: " + Information.PeriodicoOuConferencia, true);
+                                }
+                                else
+                                {
+                                    Renderer.rInfoInfos.Add("ISSN: " + Information.ISSN, true);
+                                    Renderer.rInfoInfos.Add("Periódico: " + Information.PeriodicoOuConferencia, true);
+                                }
+                                Renderer.rInfoInfos.Add("Ano Publicação: " + Information.AnoPublicação, true);
+                                Renderer.rInfoInfos.Add("Idioma: " + Information.Idioma, true);
+                                Renderer.rInfoInfos.Add("Divulgação: " + Information.MeioDivulgação, true);
+                                Renderer.rInfoInfos.Add("Natureza: " + Information.Natureza, true);
+                                string pc = "";
+                                foreach (string npc in Information.PalavrasChave)
+                                    if (pc == "")
+                                        pc += npc;
+                                    else
+                                        pc += ", " + npc;
+                                Renderer.rInfoInfos.Add("Palavras-chave: " + pc, true);
+                            }
+                            else
+                            {
+                                Renderer.rInfoInfos.Add(" Informações adicionais não disponíveis!", true);
+                            }
+                            for (int i = 0; i < iNodo.Ligações.Count; i++)
+                                if (iNodo.Ligações[i].Tipo == 0)
+                                    Renderer.rInfoLista.Add(Program.GetNodoFromLists(iNodo.Ligações[i]).Nome);
+                            break;
+                        }
+                    // Livro
+                    case 2:
+                        {
+                            Renderer.rInfoInfos.Clear();
+                            Renderer.rInfoInfos.Add("Livro", true);
+                            Renderer.rInfoLista.Visible = true;
+                            Renderer.rInfoLista.Items.Clear();
+                            Renderer.rInfoOrgOpenPanel.Visible = false;
+                            Renderer.rInfoTipoLista.Visible = true;
+                            Renderer.rInfoTipoLista.Text = "Ligações: ";
+                            TFLivro Information = new TFLivro();
+                            bool Go = true;
+                            try
+                            {
+                                Information = Program.fLivros.GetLivro(iNodo.Data);
+                            }
+                            catch
+                            {
+                                Go = false;
+                            }
+                            if (Go)
+                            {
+                                Renderer.rInfoInfos.Add("Título: " + Information.Título, true);
+                                Renderer.rInfoInfos.Add("Ano Publicação: " + Information.AnoPublicação, true);
+                                Renderer.rInfoInfos.Add("ISBN: " + Information.ISBN, true);
+                                Renderer.rInfoInfos.Add("Idioma: " + Information.Idioma, true);
+                                Renderer.rInfoInfos.Add("Divulgação: " + Information.MeioDivulgação, true);
+                                string pc = "";
+                                foreach (string npc in Information.PalavrasChave)
+                                    if (pc == "")
+                                        pc += npc;
+                                    else
+                                        pc += ", " + npc;
+                                Renderer.rInfoInfos.Add("Palavras-chave: " + pc, true);
+                            }
+                            else
+                            {
+                                Renderer.rInfoInfos.Add(" Informações adicionais não disponíveis!", true);
+                            }
+                            for (int i = 0; i < iNodo.Ligações.Count; i++)
+                                Renderer.rInfoLista.Add(Program.GetNodoFromLists(iNodo.Ligações[i]).Nome);
+                            break;
+                        }
+                    // Periódico
+                    case 3:
+                        {
+                            Renderer.rInfoInfos.Clear();
+                            Renderer.rInfoInfos.Add("Periódico", true);
+                            Renderer.rInfoLista.Visible = true;
+                            Renderer.rInfoLista.Items.Clear();
+                            Renderer.rInfoOrgOpenPanel.Visible = false;
+                            Renderer.rInfoTipoLista.Visible = true;
+                            Renderer.rInfoTipoLista.Text = "Ligações: ";
+                            TFPeriódico Information = new TFPeriódico();
+                            bool Go = true;
+                            try
+                            {
+                                 Information = Program.fPeridódicos.GetPeriódico(iNodo.Data);
+                            }
+                            catch
+                            {
+                                Go = false;
+                            }
+                            if (Go)
+                            {
+                                Renderer.rInfoInfos.Add("Nome: " + Information.Nome, true);
+                                Renderer.rInfoInfos.Add("ISSN: " + Information.ISSN, true);
+                                Renderer.rInfoInfos.Add("Qualis: " + Information.Qualis, true);
+                            }
+                            else
+                            {
+                                Renderer.rInfoInfos.Add(" Informações adicionais não disponíveis!", true);
+                            }
+                            for (int i = 0; i < iNodo.Ligações.Count; i++)
+                                Renderer.rInfoLista.Add(Program.GetNodoFromLists(iNodo.Ligações[i]).Nome);
+                            break;
+                        }
+                    // Capítulo
+                    case 4:
+                        {
+                            Renderer.rInfoInfos.Clear();
+                            Renderer.rInfoInfos.Add("Capítulo de Livro", true);
+                            Renderer.rInfoLista.Visible = true;
+                            Renderer.rInfoLista.Items.Clear();
+                            Renderer.rInfoOrgOpenPanel.Visible = false;
+                            Renderer.rInfoTipoLista.Visible = true;
+                            Renderer.rInfoTipoLista.Text = "Coautores: ";
+                            TFCap Information = new TFCap();
+                            bool Go = true;
+                            try
+                            {
+                                Information = Program.fCapítulos.GetCapítulo(iNodo.Data);
+                            }
+                            catch
+                            {
+                                Go = false;
+                            }
+                            if (Go)
+                            {
+                                Renderer.rInfoInfos.Add("Título: " + Information.Título, true);
+                                Renderer.rInfoInfos.Add("Ano Publicação: " + Information.AnoPublicação, true);
+                                Renderer.rInfoInfos.Add("ISBN: " + Information.ISBN, true);
+                                Renderer.rInfoInfos.Add("Idioma: " + Information.Idioma, true);
+                                Renderer.rInfoInfos.Add("Divulgação: " + Information.MeioDivulgação, true);
+                                Renderer.rInfoInfos.Add("Livro: " + Information.Livro, true);
+                                string pc = "";
+                                if (Information.PalavrasChave != null)
+                                    foreach (string npc in Information.PalavrasChave)
+                                        if (pc == "")
+                                            pc += npc;
+                                        else
+                                            pc += ", " + npc;
+                                Renderer.rInfoInfos.Add("Palavras-chave: " + pc, true);
+                            }
+                            else
+                            {
+                                Renderer.rInfoInfos.Add(" Informações adicionais não disponíveis!", true);
+                            }
+                            for (int i = 0; i < iNodo.Ligações.Count; i++)
+                                Renderer.rInfoLista.Add(Program.GetNodoFromLists(iNodo.Ligações[i]).Nome);
+                           break;
+                        }
+                    // Conferência
+                    case 5:
+                        {
+                            Renderer.rInfoInfos.Clear();
+                            Renderer.rInfoInfos.Add("Conferência", true);
+                            Renderer.rInfoLista.Visible = true;
+                            Renderer.rInfoLista.Items.Clear();
+                            Renderer.rInfoOrgOpenPanel.Visible = false;
+                            Renderer.rInfoTipoLista.Visible = true;
+                            Renderer.rInfoTipoLista.Text = "Ligações: ";
+                            TFConferência Information = new TFConferência();
+                            bool Go = true;
+                            try
+                            {
+                                Information = Program.fConferências.GetConferência(iNodo.Data);
+                            }
+                            catch
+                            {
+                                Go = false;
+                            }
+                            if (Go)
+                            {
+                                Renderer.rInfoInfos.Add("Nome: " + Information.Nome, true);
+                                Renderer.rInfoInfos.Add("Caráter: " + Information.Caráter, true);
+                                Renderer.rInfoInfos.Add("Qualis: " + Information.Qualis, true);
+                            }
+                            else
+                            {
+                                Renderer.rInfoInfos.Add(" Informações adicionais não disponíveis!", true);
+                            }
+                            for (int i = 0; i < iNodo.Ligações.Count; i++)
+                                Renderer.rInfoLista.Add(Program.GetNodoFromLists(iNodo.Ligações[i]).Nome);
+                            break;
+                        }
+                    default:
+                        {
+                            break;
+                        }
+                }
+            }
         }
 
         // Seleciona um nodo - coloca-o no centro e faz todos os ligados serem desenhados

@@ -27,15 +27,13 @@ namespace VisualSort
         public static TBlocoPeriódicosHandler fPeridódicos = new TBlocoPeriódicosHandler();
         public static TBlocoCapítulosHandler fCapítulos = new TBlocoCapítulosHandler();
         public static TBlocoConferênciasHandler fConferências = new TBlocoConferênciasHandler();
-        public static TBlocoInstituiçõesHandler fInstituições = new TBlocoInstituiçõesHandler();
         /* LISTAS DE TODOS OS DADOS UTILIZADOS (listas-mestre) */
         public static TBigList mPessoas = new TBigList(0);
         public static TBigList mArtigos = new TBigList(1);
         public static TBigList mLivros = new TBigList(2);
-        public static TBigList mPeridódicos = new TBigList(3);
+        public static TBigList mPeriódicos = new TBigList(3);
         public static TBigList mCapítulos = new TBigList(4);
         public static TBigList mConferências = new TBigList(5);
-        public static TBigList mInstituições = new TBigList(6);
         public static TBigList[] mListas;
         // Retorna o Nodo, dado um Ponteiro para Nodo
         // Tipo (0= Pessoa; 1= Artigo; 2= Livro; 3= Periódico; 4= Capítulo; 5= Conferência; 6= Instituição)
@@ -50,13 +48,11 @@ namespace VisualSort
                 case 2:
                     return Program.mLivros[(int)Nodo.Índice];
                 case 3:
-                    return Program.mPeridódicos[(int)Nodo.Índice];
+                    return Program.mPeriódicos[(int)Nodo.Índice];
                 case 4:
                     return Program.mCapítulos[(int)Nodo.Índice];
                 case 5:
                     return Program.mConferências[(int)Nodo.Índice];
-                case 6:
-                    return Program.mInstituições[(int)Nodo.Índice];
                 default:
                     return null;
             }
@@ -80,7 +76,6 @@ namespace VisualSort
             fPeridódicos.InicializaGravação();
             fCapítulos.InicializaGravação();
             fConferências.InicializaGravação();
-            fInstituições.InicializaGravação();
             CSVBIZU.ConferenciasCSV();
             CSVBIZU.PeriodicosCSV();
             XMLBIZU.ReadFromXML(Constants.DiretorioRaiz + "arquivo0.xml");
@@ -91,7 +86,6 @@ namespace VisualSort
             fPeridódicos.FinalizaGravação();
             fCapítulos.FinalizaGravação();
             fConferências.FinalizaGravação();
-            fInstituições.FinalizaGravação();
 
             using (Renderer game = new Renderer())
             {
