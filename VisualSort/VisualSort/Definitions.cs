@@ -1299,26 +1299,61 @@ namespace VisualSort
 
         }
         // Função que verifica se o nome de entrada é o mesmo (ou seja, se todas as palavras de Value estão em Nome)
-        public bool MesmoNome(string Value, bool ForceEqual)
+        public bool MesmoNome(string Value, bool ForceEqual, bool UseDistance, bool useNormalizedName)
         {
             if (Nome == null)
                 return false;
             // TODO - TERMINAR
             if (Value != null)
             {
+                string sNome, sValue;
+                if (useNormalizedName)
+                    sNome = NomeNormalizado.ToLower();
+                else
+                    sNome = Nome.ToLower();
+                sValue = Value.ToLower();
                 if (ForceEqual)
-                    return Value == Nome;
-                else 
+                    return StringFunctions.CompareStr(Value, Nome, UseDistance, 2);
+                else
                 {
+                    if (sValue == sNome)
+                        return true;
+                    bool Cont = true;
+                    int sCount = 0;
+                    foreach (string substr in sValue.Split(' '))
+                    {
+                        if (!sNome.Contains(substr))
+                        {
+                            Cont = false;
+                            sCount++;
+                        }
+                    }
+                    if (Cont)
+                        return true;
+                    string[] vsplits = sValue.Split(' ');
+                    string[] nsplits = sNome.Split(' ');
                     bool ContainsUpper = true;
-                    foreach (char c in Value)
+                    int UpperCount = 0;
+                    // Se o nome for o mesmo
+                    foreach (char c in sValue)
                         if (char.IsUpper(c))
                         {
-                            if (!this.Nome.Contains(c))
+                            if (!sNome.Contains(c))
                                 ContainsUpper = false;
+                            else
+                                UpperCount++;
                         }
-                    if (ContainsUpper == true)
-                        return true;
+                    // Se a última ou 1ª palavra existir e o número de maísuculas for o mesmo de letras, true
+                    if (sNome.Contains(vsplits[vsplits.Length - 1]))
+                    {
+                        if (vsplits.Length == UpperCount)
+                            return true;
+                    }
+                    if (sNome.Contains(vsplits[0]))
+                    {
+                        if (vsplits.Length == UpperCount)
+                            return true;
+                    }
                 }
 
                 return false;
@@ -1395,7 +1430,7 @@ namespace VisualSort
         {
             foreach (TInfoNodo Nodo in Elementos)
             {
-                if (ProcuraNodo(Nodo.Nome, true).Count == 0)
+                if (ProcuraNodo(Nodo.Nome, true, false, false).Count == 0)
                 {
                     Add(Nodo);
                     this[this.Count - 1].Nodo = new TPNodo(this.Count-1, Tipo);
@@ -1421,7 +1456,7 @@ namespace VisualSort
         // Cria um novo elemento dado somente um nome
         public int NovoNodo(string Nome)
         {
-            List<TInfoNodo> Lista = ProcuraNodo(Nome, true);
+            List<TInfoNodo> Lista = ProcuraNodo(Nome, true, false, false);
             if (Lista.Count == 0)
             {
                 Add(new TInfoNodo(Nome, new BPos(-1, -1)));
@@ -1455,9 +1490,9 @@ namespace VisualSort
          }
 
          // Funções para procurar todos os Elementos com dado Critério
-         public List<TInfoNodo> ProcuraNodo(string Nome, bool SomenteIgual)
+         public List<TInfoNodo> ProcuraNodo(string Nome, bool SomenteIgual, bool useDistance, bool useNormalizedName)
         {
-            return this.FindAll(p => p.MesmoNome(Nome, SomenteIgual));
+            return this.FindAll(p => p.MesmoNome(Nome, SomenteIgual, useDistance, useNormalizedName));
         }
         public List<TInfoNodo> ProcuraNodoISSN(string ISSN, bool SomenteIgual)
         {
@@ -1527,6 +1562,28 @@ namespace VisualSort
                     aux += 'e';
                 else if (entrada[i] == 'ü')
                     aux += 'u';
+                else if (entrada[i] == 'Ã')
+                    aux += 'A';
+                else if (entrada[i] == 'Ç')
+                    aux += 'C';
+                else if (entrada[i] == 'Ó')
+                    aux += 'O';
+                else if (entrada[i] == 'Á')
+                    aux += 'A';
+                else if (entrada[i] == 'À')
+                    aux += 'A';
+                else if (entrada[i] == 'É')
+                    aux += 'E';
+                else if (entrada[i] == 'Í')
+                    aux += 'I';
+                else if (entrada[i] == 'Ô')
+                    aux += 'O';
+                else if (entrada[i] == 'Ê')
+                    aux += 'E';
+                else if (entrada[i] == 'Ü')
+                    aux += 'U';
+                else if (entrada[i] == ' ')
+                    aux += ' ';
                 else
                 {
                     if(char.IsLetterOrDigit(entrada[i]))
@@ -1534,6 +1591,14 @@ namespace VisualSort
                 }
             }
             return aux;
+        }
+
+        public static bool CompareStr(string s1, string s2, bool useDistance, int Threshold)
+        {
+            if (useDistance)
+                return (EditionDistance(s1, s2) <= Threshold);
+            else
+                return(s1 == s2);
         }
     }
 }

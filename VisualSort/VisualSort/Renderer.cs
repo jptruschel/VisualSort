@@ -38,7 +38,7 @@ namespace VisualSort
         public static GUI.TGUIPanel LeftPanel, RightPanel, FilterPanel;
         GUI.TGUIImgBtn LeftPanelHideButton1, LeftPanelHideButton2,
             InfoPanelHideButton1, InfoPanelHideButton2, imgDivider1,
-            imgDivider2, imgDivider11, LeftSearchButton, LeftSeachButtonGraphar;
+            imgDivider2, imgDivider11, LeftSearchButton/*, LeftSeachButtonGraphar*/;
         public static GUI.TGUICheckBox[] GraphViewCheckBoxs;
         public static GUI.TGUIImgBtn FilterButton;
         GUI.TGUICheckBox[] FilterCheckBoxs;
@@ -185,15 +185,14 @@ namespace VisualSort
                 aNodo.Pesquisado = false;
             LeftResultList.Items.Clear();
             LeftSearchCheckBoxShowOnGraph.Enabled = (SearchResults.Count > 0);
-            LeftSeachButtonGraphar.Enabled = (SearchResults.Count > 0);
+            //LeftSeachButtonGraphar.Enabled = (SearchResults.Count > 0);
             isLoading = true;
             LeftResultList.ItemIndex = -1;
             SearchResults.Clear();
 
-
             for (int Tip = 0; Tip < 6; Tip++)
                 if (FilterCheckBoxs[Tip].Checked)
-                    foreach (TInfoNodo nNodo in Program.mListas[Tip].ProcuraNodo(LeftSearchEdit.Text, LeftSearchCheckBoxExato.Checked))
+                    foreach (TInfoNodo nNodo in Program.mListas[Tip].ProcuraNodo(LeftSearchEdit.Text, LeftSearchCheckBoxExato.Checked, true, true))
                     {
                         SearchResults.Add(nNodo);
                         nNodo.Pesquisado = true;
@@ -205,7 +204,7 @@ namespace VisualSort
                 LeftResultList.Items.Add(nNodo.Nome + " (" + nNodo.Nodo.Tipo.ToString() + ")");
             }
             LeftSearchCheckBoxShowOnGraph.Enabled = (SearchResults.Count > 0);
-            LeftSeachButtonGraphar.Enabled = (SearchResults.Count > 0);
+            //LeftSeachButtonGraphar.Enabled = (SearchResults.Count > 0);
             isLoading = false;
             return true;
         }
@@ -231,7 +230,6 @@ namespace VisualSort
             {
                 FilterPanel.Visible = true;
                 FilterButton.Text = "Filtros  | ";
-                FilterPanel.Pos = new Vector2(5, 279) + new Vector2(0, FilterButton.Size.Y);// new Vector2(FilterButton.Size.X, 0);
             }
             return true;
         }
@@ -388,10 +386,10 @@ namespace VisualSort
             LeftSearchCheckBoxShowOnGraph.backgroundColor = Color.Azure * 0.5f;
             LeftSearchCheckBoxShowOnGraph.transparentBackground = false;
             LeftSearchCheckBoxShowOnGraph.Enabled = false;
-            LeftSeachButtonGraphar = LeftPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(LeftPanel.Size.X - 145 - 5, LeftResultList.Pos.Y + LeftResultList.Size.Y + 3), new Vector2(145, 25), "Grafar Pesquisa")) as GUI.TGUIImgBtn;
-            LeftSeachButtonGraphar.AutoSize = false;
-            LeftSeachButtonGraphar.Font = 4;
-            LeftSeachButtonGraphar.Enabled = false;
+            //LeftSeachButtonGraphar = LeftPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(LeftPanel.Size.X - 145 - 5, LeftResultList.Pos.Y + LeftResultList.Size.Y + 3), new Vector2(145, 25), "Grafar Pesquisa")) as GUI.TGUIImgBtn;
+            //LeftSeachButtonGraphar.AutoSize = false;
+            //LeftSeachButtonGraphar.Font = 4;
+            //LeftSeachButtonGraphar.Enabled = false;
 
             // RightPanel
             RightPanel.AddComponent(new GUI.TGUILabel(new Vector2(30, 5), new Vector2(100, 50), "Informações")).Font = 0;

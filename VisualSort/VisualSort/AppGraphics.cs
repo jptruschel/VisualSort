@@ -146,7 +146,7 @@ namespace VisualSort
                         cor,
                         RotAngle,
                         new Vector2(128, 128), SpriteEffects.None, 0f);
-                if (InfoNodo.MesmoNome("Krug", false))
+                if (InfoNodo.MesmoNome("Krug", false, false, true))
                 {
                     spriteBatch.Draw(AppGraphics.LoadingTexture[4],
                     new Rectangle(
