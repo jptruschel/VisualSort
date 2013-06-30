@@ -144,7 +144,7 @@ namespace VisualSort
     {
         public static void PeriodicosCSV()
         {
-            StreamReader reader = new StreamReader(File.Open(Constants.DiretorioRaiz+Constants.CSVFileNamePeriódicos, FileMode.Open),Encoding.GetEncoding("iso-8859-1"));
+            StreamReader reader = new StreamReader(File.Open(Constants.DiretorioRaiz+Constants.CSVFileNamePeriódicos, FileMode.Open),Encoding.GetEncoding(("iso-8859-1")));
             reader.ReadLine(); //Lê a linha que contém informações inúteis
             foreach (string s in reader.ReadToEnd().Split('\n'))
             {
@@ -242,7 +242,6 @@ namespace VisualSort
                             int indiceper = (int)Program.mPeriódicos.NovoNodo(artigo.PeriodicoOuConferencia,artigo.ISSN);
                             Program.mArtigos[ÍndiceArtigo].AdicionaLigaçãoCom(new TPNodo(indiceper, 5));
                             Periódicos.Add(indiceper);
-                            
                         }
                         else if (PArtigo.Name == "PALAVRAS-CHAVE" && reader.AttributeCount>0)
                         {
@@ -562,8 +561,8 @@ namespace VisualSort
     // Uma Produção Bibliográfica
     public struct TFArtigo
     {
-        public byte Tipo;                  //1 = Periodico; 2 = Conferencia   
-        public string Título;              // Título
+        public byte Tipo;               //1 = Periodico; 2 = Conferencia   
+        public string Título;           // Título
         public string ISSN;             // ISSN relativo
         public string PeriodicoOuConferencia;        // Nome do periódico ou conferencia
         public string MeioDivulgação;   // Meio de Divulgação da Produção
@@ -1211,8 +1210,7 @@ namespace VisualSort
     {
         public List<TPNodo> Ligações;   // As ligações do elemento com todos os outros
         public string Nome;             // Somente possui palavras suficentemente interessantes para pesquisa rápida
-        public string ISSN;
-        public string NomeNormalizado;
+        public string ISSN;        
         public BPos Data;               // Posição no disco (bloco e offset) de todos os dados
         public TPNodo Nodo;             // Informação sobre que tipo é e onde está na lista principal
         public TDrawNodo DrawNodo;      // Nodo de desenho (ponteiro)
@@ -1221,8 +1219,14 @@ namespace VisualSort
         // Constructors
         public TInfoNodo(string Nome, BPos Data) : base() 
         {
-            this.Nome = Nome;
-            this.NomeNormalizado = StringFunctions.CustomNormalize(Nome);
+            /*foreach (string substr in Nome.Split(' '))
+            {
+                if (substr.Count() >= 3)
+                    this.Nome = String.Concat(this.Nome, substr, " ");
+                this.Iniciais = String.Concat(this.Iniciais, substr.Substring(0, 1));
+            }
+            if ((this.Nome == null) || (this.Nome.Length == 0))*/
+                this.Nome = Nome;
             this.Data = Data;
             this.Nodo = new TPNodo(-1, -1);
             this.Ligações = new List<TPNodo>();
@@ -1233,8 +1237,14 @@ namespace VisualSort
         public TInfoNodo(string Nome,string ISSN, BPos Data)
             : base()
         {
+            /*foreach (string substr in Nome.Split(' '))
+            {
+                if (substr.Count() >= 3)
+                    this.Nome = String.Concat(this.Nome, substr, " ");
+                this.Iniciais = String.Concat(this.Iniciais, substr.Substring(0, 1));
+            }
+            if ((this.Nome == null) || (this.Nome.Length == 0))*/
             this.Nome = Nome;
-            this.NomeNormalizado = StringFunctions.CustomNormalize(Nome);
             this.Data = Data;
             this.ISSN = ISSN;
             this.Nodo = new TPNodo(-1, -1);
@@ -1249,7 +1259,6 @@ namespace VisualSort
             for (int i = 0; i < this.Ligações.Count; i++)
                 this.Ligações[i].GravaTPNodo(writer);
             writer.Write(this.Nome);
-            writer.Write(this.NomeNormalizado);
             if (this.ISSN != null)
                 writer.Write(this.ISSN);
             else
@@ -1267,7 +1276,6 @@ namespace VisualSort
             for(int i = 0;i<aux;i++)
                 INodo.Ligações.Add(TPNodo.LeTPNodo(reader));
             INodo.Nome = reader.ReadString();
-            INodo.NomeNormalizado = reader.ReadString();
             INodo.ISSN = reader.ReadString();
             INodo.Data = BPos.LeBPos(reader);
             INodo.Nodo = TPNodo.LeTPNodo(reader);
@@ -1304,24 +1312,30 @@ namespace VisualSort
             if (Nome == null)
                 return false;
             // TODO - TERMINAR
+            bool Cont = true;
+            int sCount = 0;
             if (Value != null)
             {
-                if (ForceEqual)
-                    return Value == Nome;
-                else 
+                if (!ForceEqual)
                 {
-                    bool ContainsUpper = true;
-                    foreach (char c in Value)
-                        if (char.IsUpper(c))
+                    foreach (string substr in Value.Split(' '))
+                    {
+                        if (!Nome.Contains(substr))
                         {
-                            if (!this.Nome.Contains(c))
-                                ContainsUpper = false;
+                            Cont = false;
+                            sCount++;
                         }
-                    if (ContainsUpper == true)
-                        return true;
+                        //if (substr.Length >= 1)
+                        //    if (!Iniciais.Contains(substr.Substring(0, 1)))
+                        //        Cont = false;
+                    }
                 }
-
-                return false;
+                else
+                    if (Value == Nome)
+                        Cont = true;
+                    else
+                        Cont = false;
+                return Cont;
                 //return (Value == this.Nome);
             }
             return false;
@@ -1354,15 +1368,7 @@ namespace VisualSort
         {
             foreach (TPNodo Nodo in Elementos)
             {
-                int Índice = -1;
-                for (int i = 0; i < Ligações.Count; i++)
-                {
-                    if ((Ligações[i].Índice == Nodo.Índice) &&
-                        (Ligações[i].Tipo == Nodo.Tipo))
-                    {
-                        Índice = i;
-                    }
-                }
+                int Índice = Ligações.IndexOf(Nodo);
                 if (Índice > -1)
                 {
                     Ligações.RemoveAt(Índice);
@@ -1474,66 +1480,6 @@ namespace VisualSort
         public List<TInfoNodo> ProcuraNodo(Predicate<TInfoNodo> match)
         {
             return this.FindAll(match);
-        }
-    }
-
-    public static class StringFunctions
-    {
-        public static int EditionDistance(string s1, string s2)
-        {
-            int[,] matrix = new int[s1.Length+1,s2.Length+1];
-            int equals = 0;
-            for (int i = 0; i < s1.Length + 1; i++)
-                matrix[i, 0] = i;
-            for (int i = 0; i < s2.Length+1; i++)
-                matrix[0, i] = i;
-            
-
-            for (int j = 1; j < s2.Length + 1; j++)
-                for (int i = 1; i < s1.Length +1; i++)
-                {
-                    if (s1[i - 1] != s2[j - 1])
-                        equals = 1;
-                    else
-                        equals = 0;
-                    matrix[i, j] = Math.Min(Math.Min(matrix[i - 1, j]+1, matrix[i, j - 1]+1), (matrix[i - 1, j - 1] + equals));
-                }
-            return matrix[s1.Length, s2.Length];
-        }
-
-        public static string CustomNormalize(string s)
-        {
-            string aux = string.Empty;
-            string entrada = s.ToLower();
-            for (int i = 0; i < s.Length; i++)
-            {
-                if (entrada[i] == 'ã')
-                    aux += 'a';
-                else if (entrada[i] == 'ç')
-                    aux += 'c';
-                else if (entrada[i] == 'ó')
-                    aux += 'o';
-                else if (entrada[i] == 'á')
-                    aux += 'a';
-                else if (entrada[i] == 'à')
-                    aux += 'a';
-                else if (entrada[i] == 'é')
-                    aux += 'e';
-                else if (entrada[i] == 'í')
-                    aux += 'i';
-                else if (entrada[i] == 'ô')
-                    aux += 'o';
-                else if (entrada[i] == 'ê')
-                    aux += 'e';
-                else if (entrada[i] == 'ü')
-                    aux += 'u';
-                else
-                {
-                    if(char.IsLetterOrDigit(entrada[i]))
-                        aux += entrada[i];
-                }
-            }
-            return aux;
         }
     }
 }

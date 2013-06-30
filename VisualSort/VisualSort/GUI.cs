@@ -732,7 +732,7 @@ namespace VisualSort
         // Uma checkbox
         public class TGUICheckBox : GUI.TGUIObject
         {
-            public bool Checked;
+            public bool Checked, Changed;
             public bool MouseOver, Clicking;
             public int CheckBoxSize;
             public int CheckBoxYOffset;
@@ -755,6 +755,7 @@ namespace VisualSort
                 Clicking = false;
                 Visible = true;
                 Enabled = true;
+                Changed = false;
             }
             // Verifica clique do mouse no componente
             public override void Update(MouseState mouseState)
@@ -785,6 +786,7 @@ namespace VisualSort
                         if (Clicking)
                         {
                             Checked = !Checked;
+                            Changed = true;
                         }
                     }
                 }

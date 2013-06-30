@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
@@ -80,6 +81,14 @@ namespace VisualSort
             CSVBIZU.PeriodicosCSV();
             XMLBIZU.ReadFromXML(Constants.DiretorioRaiz + "arquivo0.xml");
             XMLBIZU.ReadFromXML(Constants.DiretorioRaiz + "arquivo1.xml");
+           /* foreach (var path in Directory.GetFiles(@Constants.DiretorioRaiz))
+            {
+                if (System.IO.Path.GetExtension(path) == ".xml")
+                {
+                    Console.WriteLine(path);
+                    XMLBIZU.ReadFromXML(path);
+                }
+            }*/
             fPessoas.FinalizaGravação();
             fArtigos.FinalizaGravação();
             fLivros.FinalizaGravação();

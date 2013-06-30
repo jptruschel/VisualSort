@@ -214,7 +214,7 @@ namespace VisualSort
         {
             if (arg != -1)
             {
-                AppGraphics.SelecionaNodoComVoltar(SearchResults[arg].Nodo, MouseNodeHandler.MaxNodoSelecionado);
+                AppGraphics.SelecionaNodoComVoltar(SearchResults[arg].Nodo, -1);
                 MouseNodeHandler.UnMouseOver();
             }
             return true;
@@ -257,7 +257,19 @@ namespace VisualSort
         // Redesenha o grafo
         public static bool LeftChangeGraphFilterCheckClick(int Tag)
         {
-            AppGraphics.MaxNodos[MouseNodeHandler.MaxNodoSelecionado].Inicializa();
+            bool Do = false;
+            for (int i = 0; i < 6; i++)
+                if (GraphViewCheckBoxs[i].Changed == true)
+                {
+                    GraphViewCheckBoxs[i].Changed = false;
+                    Do = true;
+                }
+            if (Do)
+            {
+                AppGraphics.MaxNodos[MouseNodeHandler.MaxNodoSelecionado].Esconder();
+                AppGraphics.MaxNodos[MouseNodeHandler.MaxNodoSelecionado].Ressurgir();
+            }
+                //AppGraphics.MaxNodos[MouseNodeHandler.MaxNodoSelecionado].Inicializa();
             return true;
         }
 
@@ -400,7 +412,7 @@ namespace VisualSort
             rInfoLista = RightPanel.AddComponent(new GUI.TGUIList(new Vector2(5, 435), new Vector2(RightPanel.Size.X - 10, RightPanel.Size.Y - 470))) as GUI.TGUIList;
             rInfoLista.ResizeOnMouse = false;
             rInfoLista.Font = 5;
-            rInfoOrgOpenPanel = RightPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(5, RightPanel.Size.Y - 30), new Vector2(), "|  Chave de Organização")) as GUI.TGUIImgBtn;
+            rInfoOrgOpenPanel = RightPanel.AddComponent(new GUI.TGUIImgBtn(new Vector2(15, RightPanel.Size.Y - 30), new Vector2(), "|  Chave de Organização")) as GUI.TGUIImgBtn;
             rInfoOrgOpenPanel.BorderSize = 1;
             rInfoOrgOpenPanel.backgroundColor = Color.DarkOrange * 1.0f;
             rInfoOrgOpenPanel.OnClick = ToggleInfoListOrgPanel;
@@ -501,8 +513,6 @@ namespace VisualSort
             // Font
             DefaultFont = Content.Load<SpriteFont>("DefaultFont");
 
-            // Carrega o XML
-
             // Example
             //Program.mPessoas.NovoNodo(new TInfoNodo("Leandro Krug Wives", new BPos(0,0)));
           //  Program.mPessoas.NovoNodo(new TInfoNodo("Aline", new BPos(0, 1)));
@@ -519,6 +529,7 @@ namespace VisualSort
                     Program.GetNodoFromLists(new TPNodo(i, 0)).AdicionaLigaçãoCom(new TPNodo(j, 0));
                 }
             }*/
+            MouseNodeHandler.MaxNodoSelecionado = -1;
             AppGraphics.SelecionaNodoComVoltar(Program.mPessoas[0].Nodo, -1);
             isLoading = false;
         }
@@ -544,7 +555,7 @@ namespace VisualSort
             mouseState = Mouse.GetState();
             prevWheelValue = currWheelValue;
             currWheelValue = mouseState.ScrollWheelValue;
-            // Somente considera algo se o mouse não está em um dos panels (e ele não está escondido)
+            // Somente considera algo se o foco ta no grafo
             if (isFocusOnGraph())
             {
                 AppGraphics.Camera.Zoom = AppGraphics.Camera.Zoom + (currWheelValue - prevWheelValue) * 0.001f * (AppGraphics.Camera.Zoom);
@@ -657,6 +668,7 @@ namespace VisualSort
                     Panel.Update(mouseState);
             FilterPanel.Update(mouseState);
             FilterButton.Update(mouseState);
+            LeftChangeGraphFilterCheckClick(0);
 
             // Update Camer Info (mouse and limits)
             AppGraphics.Camera.UpdateCameraInfo(mouseState);
@@ -760,9 +772,9 @@ namespace VisualSort
                 Panel.Draw(spriteBatch);
 
             // Draws the FPS
-            spriteBatch.DrawString(DefaultFont, "FPS: " + (int)(1 / (float)gameTime.ElapsedGameTime.TotalSeconds), new Vector2(LeftPanel.Pos.X + LeftPanel.Size.X + 2, 0f), Color.White);
-            spriteBatch.DrawString(DefaultFont, "Camera: X=" + AppGraphics.Camera.Pos.X.ToString() + " Y=" + AppGraphics.Camera.Pos.Y.ToString() + " Z=" + AppGraphics.Camera.Zoom.ToString() + " R=" + AppGraphics.Camera.Rotation.ToString(), new Vector2(LeftPanel.Pos.X + LeftPanel.Size.X + 2, 20f), Color.White);
-            spriteBatch.DrawString(DefaultFont, "Mouse: X=" + AppGraphics.Camera.mousePos.X.ToString() + " Y=" + AppGraphics.Camera.mousePos.Y.ToString() + " l:" + AppGraphics.DPrimitives.Lines.Count, new Vector2(LeftPanel.Pos.X + LeftPanel.Size.X + 2, 40f), Color.White);
+            //spriteBatch.DrawString(DefaultFont, "FPS: " + (int)(1 / (float)gameTime.ElapsedGameTime.TotalSeconds), new Vector2(LeftPanel.Pos.X + LeftPanel.Size.X + 2, 0f), Color.White);
+            //spriteBatch.DrawString(DefaultFont, "Camera: X=" + AppGraphics.Camera.Pos.X.ToString() + " Y=" + AppGraphics.Camera.Pos.Y.ToString() + " Z=" + AppGraphics.Camera.Zoom.ToString() + " R=" + AppGraphics.Camera.Rotation.ToString(), new Vector2(LeftPanel.Pos.X + LeftPanel.Size.X + 2, 20f), Color.White);
+            //spriteBatch.DrawString(DefaultFont, "Mouse: X=" + AppGraphics.Camera.mousePos.X.ToString() + " Y=" + AppGraphics.Camera.mousePos.Y.ToString() + " l:" + AppGraphics.DPrimitives.Lines.Count, new Vector2(LeftPanel.Pos.X + LeftPanel.Size.X + 2, 40f), Color.White);
             spriteBatch.End();
 
             base.Draw(gameTime);

@@ -24,6 +24,7 @@ namespace VisualSort
         public bool Selected;
         public float RotAngle;
         public TInfoNodo InfoNodo;
+        public bool SpinSelect;
 
         public TDrawNodo(TInfoNodo InfoNodo)
         {
@@ -134,7 +135,7 @@ namespace VisualSort
                     0f,
                     new Vector2(AppGraphics.NodoTex.Width * 0.5f, AppGraphics.NodoTex.Height * 0.5f), SpriteEffects.None, 0f);
                 // Desenha o círculo de seleção
-                if (this.Selected)
+                if (this.Selected || this.SpinSelect)
                     spriteBatch.Draw(AppGraphics.LoadingTexture[0],
                         new Rectangle(
                             (int)(this.Pos.X),
@@ -171,8 +172,9 @@ namespace VisualSort
         public Vector2 Size;            // Tamanho (em worldSize) 
         public List<int> Lines;         // As linhas (com o ponteiro aqui para poderem ser movidas caso o elemento se mova)
         public bool Drawable;           // Se pode desenhar
+        public TInfoNodo nodoAnterior;
         // Inicializador de um maxNodo, automaticamente colocando todos os nodos ligados
-        public TDrawMaxNodo(TPNodo Nodo, Vector2 Pos)
+        public TDrawMaxNodo(TPNodo Nodo, Vector2 Pos, TInfoNodo nodoAnterior)
         {
             MainNodo = Program.GetNodoFromLists(Nodo);
             Ligações = new List<int>();
@@ -182,6 +184,7 @@ namespace VisualSort
             Size = new Vector2(0, 0);
             this.Pos = Pos;
             Drawable = true;
+            this.nodoAnterior = nodoAnterior;
         }
         // Adiciona uma maxLigação
         public void AddLigaçãoCom(int Índice)
@@ -197,6 +200,15 @@ namespace VisualSort
             Nodos.Clear();
             Drawable = false;
         }
+        // Deletar
+        public void Deletar()
+        {
+            foreach (int Lin in Lines)
+                AppGraphics.DPrimitives.Lines[Lin].Deleted = true;
+            Lines.Clear();
+            Nodos.Clear();
+            Drawable = false;
+        }
         // Ressurgir - quase igual a inicializar, mas algumas coisas já estão instanciadas
         public void Ressurgir()
         {
@@ -209,41 +221,47 @@ namespace VisualSort
             // Cria todos os drawnodos
             Size = new Vector2(0, 0);
             Loops = 0;
+            Drawable = true;
 
             Vector2 NodeDisplace = new Vector2(82f, 0.0f);
             float NodeAngleDisplace = 0f;
             // Varre todos os nodos que tem ligação, colocando eles em lugares próprios de serem desenhados
             for (int i = 0; i < MainNodo.Ligações.Count; i++)
-            {
-                TInfoNodo NodoL = Program.GetNodoFromLists(MainNodo.Ligações[i]);
-                NodoL.DrawNodo = new TDrawNodo(NodoL);
-                float cosRadians = (float)Math.Cos(NodeAngleDisplace);
-                float sinRadians = (float)Math.Sin(NodeAngleDisplace);
-                Vector2 NewPosDis = new Vector2(
-                        NodeDisplace.X * cosRadians - NodeDisplace.Y * sinRadians,
-                        NodeDisplace.X * sinRadians + NodeDisplace.Y * cosRadians);
-                NodoL.DrawNodo.MoveTo(Pos);
-                NodoL.DrawNodo.AccelerateTo(
-                    Pos + NewPosDis, 10f);
-                if (Vector2.Distance(NewPosDis, Pos) > Vector2.Distance(NewPosDis, Size))
-                    Size = NewPosDis;
+                if (Renderer.GraphViewCheckBoxs[MainNodo.Ligações[i].Tipo].Checked)
+                {
+                    TInfoNodo NodoL = Program.GetNodoFromLists(MainNodo.Ligações[i]);
+                    NodoL.DrawNodo = new TDrawNodo(NodoL);
+                    float cosRadians = (float)Math.Cos(NodeAngleDisplace);
+                    float sinRadians = (float)Math.Sin(NodeAngleDisplace);
+                    Vector2 NewPosDis = new Vector2(
+                            NodeDisplace.X * cosRadians - NodeDisplace.Y * sinRadians,
+                            NodeDisplace.X * sinRadians + NodeDisplace.Y * cosRadians);
+                    NodoL.DrawNodo.MoveTo(Pos);
+                    NodoL.DrawNodo.AccelerateTo(
+                        Pos + NewPosDis, 10f);
+                    Size = new Vector2((NewPosDis.Length() * 2) + (AppGraphics.DefaultNodeSize),
+                        (NewPosDis.Length() * 2) + (AppGraphics.DefaultNodeSize));
+                    if (nodoAnterior == NodoL)
+                        NodoL.DrawNodo.SpinSelect = true;
+                    else
+                        NodoL.DrawNodo.SpinSelect = false;
 
-                NodeAngleDisplace += (float)(-Math.PI / (8/**/ * (Loops + 1)));
-                if (NodeAngleDisplace <= -(Math.PI))
-                {
-                    NodeDisplace += new Vector2(10f / (Loops + 1), 1f);//new Vector2(6f, 1f + ((Math.Min(50, Loops)) * (1.0f))); //* ((Math.Min(10, Loops)))));
+                    NodeAngleDisplace += (float)(-Math.PI / (8/**/ * (Loops + 1)));
+                    if (NodeAngleDisplace <= -(Math.PI))
+                    {
+                        NodeDisplace += new Vector2(10f / (Loops + 1), 1f);//new Vector2(6f, 1f + ((Math.Min(50, Loops)) * (1.0f))); //* ((Math.Min(10, Loops)))));
+                    }
+                    if (NodeAngleDisplace < -(1.999 * Math.PI))
+                    {
+                        //NodeDisplace += new Vector2(48f, 16f);
+                        NodeAngleDisplace = 0.0f;
+                        Loops++;
+                    }
+                    // Adiciona a linha
+                    AppGraphics.DPrimitives.Lines[Lines[i]].Drawable = true;
+                    // Adiciona o nodo na lista de nodos
+                    Nodos.Add(NodoL.DrawNodo);
                 }
-                if (NodeAngleDisplace < -(1.999 * Math.PI))
-                {
-                    //NodeDisplace += new Vector2(48f, 16f);
-                    NodeAngleDisplace = 0.0f;
-                    Loops++;
-                }
-                // Adiciona a linha
-                AppGraphics.DPrimitives.Lines[Lines[i]].Drawable = true;
-                // Adiciona o nodo na lista de nodos
-                Nodos.Add(NodoL.DrawNodo);
-            }
         }
         // Inicializa todos os nodos para desenhar e cria as linhas ligando todos
         // Se chamado após um Esconde, Ressurgir será chamado
@@ -271,42 +289,65 @@ namespace VisualSort
             float NodeAngleDisplace = 0f;
             // Varre todos os nodos que tem ligação, colocando eles em lugares próprios de serem desenhados
             for (int i = 0; i < MainNodo.Ligações.Count; i++)
+            {
+                TInfoNodo NodoL = Program.GetNodoFromLists(MainNodo.Ligações[i]);
+                NodoL.DrawNodo = new TDrawNodo(NodoL);
                 if (Renderer.GraphViewCheckBoxs[MainNodo.Ligações[i].Tipo].Checked)
                 {
-                    TInfoNodo NodoL = Program.GetNodoFromLists(MainNodo.Ligações[i]);
-                    NodoL.DrawNodo = new TDrawNodo(NodoL);
-                    float cosRadians = (float)Math.Cos(NodeAngleDisplace);
-                    float sinRadians = (float)Math.Sin(NodeAngleDisplace);
-                    Vector2 NewPosDis = new Vector2(
-                            NodeDisplace.X * cosRadians - NodeDisplace.Y * sinRadians,
-                            NodeDisplace.X * sinRadians + NodeDisplace.Y * cosRadians);
-                    NodoL.DrawNodo.MoveTo(Pos);
-                    NodoL.DrawNodo.AccelerateTo(
-                        Pos + NewPosDis, 10f);
-                    //if (Vector2.Distance(NewPosDis, Pos) > Vector2.Distance(NewPosDis, Size))
-
-                    NodeAngleDisplace += (float)(-Math.PI / (8/**/ * (Loops + 1)));
-                    if (NodeAngleDisplace <= -(Math.PI))
-                    {
-                        NodeDisplace += new Vector2(10f / (Loops + 1), 1f);//new Vector2(6f, 1f + ((Math.Min(50, Loops)) * (1.0f))); //* ((Math.Min(10, Loops)))));
-                    }
-                    if (NodeAngleDisplace < -(1.999 * Math.PI))
-                    {
-                        //NodeDisplace += new Vector2(48f, 16f);
-                        NodeAngleDisplace = 0.0f;
-                        Loops++;
-                    }
-                    Size = new Vector2((NewPosDis.Length()*2) + (AppGraphics.DefaultNodeSize),
-                        (NewPosDis.Length() * 2) + (AppGraphics.DefaultNodeSize));
+                    AdicionaNodoPeriférico(ref NodeDisplace, ref NodeAngleDisplace, ref NodoL);
+                }
+                else
+                {
                     // Adiciona a linha
                     Lines.Add((int)AppGraphics.DPrimitives.AddLine(
                         Pos,
                         NodoL.DrawNodo.Pos,
                         MainNodo.DrawNodo.Color * 0.5f,
                         NodoL.DrawNodo.Color * 0.5f));
+                    AppGraphics.DPrimitives.Lines[Lines[Lines.Count - 1]].Drawable = false;
                     // Adiciona o nodo na lista de nodos
                     Nodos.Add(NodoL.DrawNodo);
                 }
+            }
+        }
+        private void AdicionaNodoPeriférico(ref Vector2 NodeDisplace, ref float NodeAngleDisplace, ref TInfoNodo NodoL)
+        {
+            float cosRadians = (float)Math.Cos(NodeAngleDisplace);
+            float sinRadians = (float)Math.Sin(NodeAngleDisplace);
+            Vector2 NewPosDis = new Vector2(
+                    NodeDisplace.X * cosRadians - NodeDisplace.Y * sinRadians,
+                    NodeDisplace.X * sinRadians + NodeDisplace.Y * cosRadians);
+            NodoL.DrawNodo.MoveTo(Pos);
+            NodoL.DrawNodo.AccelerateTo(
+                Pos + NewPosDis, 10f);
+            if (nodoAnterior == NodoL)
+                NodoL.DrawNodo.SpinSelect = true;
+            else
+                NodoL.DrawNodo.SpinSelect = false;
+            //if (Vector2.Distance(NewPosDis, Pos) > Vector2.Distance(NewPosDis, Size))
+
+            NodeAngleDisplace += (float)(-Math.PI / (8/**/ * (Loops + 1)));
+            if (NodeAngleDisplace <= -(Math.PI))
+            {
+                NodeDisplace += new Vector2(10f / (Loops + 1), 1f);//new Vector2(6f, 1f + ((Math.Min(50, Loops)) * (1.0f))); //* ((Math.Min(10, Loops)))));
+            }
+            if (NodeAngleDisplace < -(1.999 * Math.PI))
+            {
+                //NodeDisplace += new Vector2(48f, 16f);
+                NodeAngleDisplace = 0.0f;
+                Loops++;
+            }
+            Size = new Vector2((NewPosDis.Length() * 2) + (AppGraphics.DefaultNodeSize),
+                (NewPosDis.Length() * 2) + (AppGraphics.DefaultNodeSize));
+            // Adiciona a linha
+            Lines.Add((int)AppGraphics.DPrimitives.AddLine(
+                Pos,
+                NodoL.DrawNodo.Pos,
+                MainNodo.DrawNodo.Color * 0.5f,
+                NodoL.DrawNodo.Color * 0.5f));
+            AppGraphics.DPrimitives.Lines[Lines[Lines.Count - 1]].Drawable = true;
+            // Adiciona o nodo na lista de nodos
+            Nodos.Add(NodoL.DrawNodo);
         }
         // Atualiza a posição das linhas
         public void Update(GameTime gameTime, bool UpdateNodesMouse)
@@ -393,6 +434,11 @@ namespace VisualSort
         {
             _pos = pos;
         }
+        public void LookAt(Vector2 pos, float MinSize)
+        {
+            _pos = pos;
+            _zoom = 800/MinSize;
+        }
         // Get set position
         public Vector2 Pos
         {
@@ -453,12 +499,13 @@ namespace VisualSort
     {
         public Vector2 Point1, Point2;
         public Color Color1, Color2;
-        public bool Drawable;
+        public bool Drawable, Deleted;
         public DrawLine(Vector2 P1, Vector2 P2, Color Color1, Color Color2)
         {
             Point1 = P1;
             Point2 = P2;
             Drawable = false;
+            Deleted = false;
             this.Color1 = Color1;
             this.Color2 = Color2;
         }
@@ -508,7 +555,7 @@ namespace VisualSort
                 int i = 0;
                 while ((i < Lines.Count))
                 {
-                    if (Lines[i].Drawable)
+                    if ((Lines[i].Drawable) && (!Lines[i].Deleted))
                     {
                         aD[i * 2] =
                             new VertexPositionColor(
@@ -538,17 +585,36 @@ namespace VisualSort
 
         public Int64 AddLine(Vector2 point1, Vector2 point2, Color Color)
         {
-            //  for (int i = 0; i < Lines.Count; i++)
-            //     if ((Lines[i].Point1 == point1) && (Lines[i].Point2 == point2))
-            //         return i;
+            // Varre uma posição com linhas deletadas
+            int i = 0;
+            while (i < Lines.Count)
+            {
+                if (Lines[i].Deleted)
+                {
+                    Lines[i] = new DrawLine(point1, point2, Color, Color);
+                    return i;
+                }
+                i++;
+            }
+            // Se não achou algum deletado, cria uma nova
             Lines.Add(new DrawLine(point1, point2, Color, Color));
             return Lines.Count - 1;
         }
         public Int64 AddLine(Vector2 point1, Vector2 point2, Color Color1, Color Color2)
         {
-            //for (int i = 0; i < Lines.Count; i++)
-            //   if ((Lines[i].Point1 == point1) && (Lines[i].Point2 == point2))
-            //     return i;
+            // Varre uma posição com linhas deletadas
+            int i = 0;
+            while (i < Lines.Count)
+            {
+                if (Lines[i].Deleted)
+                {
+                    Lines[i] = new DrawLine(point1, point2, Color1, Color2);
+                    Lines[i].Drawable = true;
+                    return i;
+                }
+                i++;
+            }
+            // Se não achou algum deletado, cria uma nova
             Lines.Add(new DrawLine(point1, point2, Color1, Color2));
             Lines[Lines.Count - 1].Drawable = true;
             return Lines.Count - 1;
@@ -742,26 +808,62 @@ namespace VisualSort
             DPrimitives.Lines.Clear();
         }
         // Seleciona um nodo / maxNodo, dependendo do ViewMode
-        public static void SelecionaNodoComVoltar(TPNodo Nodo, int Anterior)
+        public static void SelecionaNodoComVoltar(TPNodo Nodo, int Atual)
         {
-            if (Anterior > -1)
-                if (MaxNodos[Anterior].MainNodo.Nodo == Nodo)
-                    return;
-            if (Anterior != -1)
+            TInfoNodo nodoAtual = null;
+            //TInfoNodo nodoAnterior = null;
+            if (Atual > -1)
             {
-                MaxNodos[Anterior].Esconder();
-                // Apaga todo os depois (apaga a linha seguinte de nodos)
-                for (int i = Anterior + 1; i < MaxNodos.Count; i++)
-                    MaxNodos.RemoveAt(Anterior+1);
+                if (MaxNodos[Atual].MainNodo.Nodo == Nodo)
+                    return;
+                MaxNodos[Atual].Esconder();
+
+                nodoAtual = MaxNodos[Atual].MainNodo;
+                if (nodoAtual != null)
+                {
+                    if ((Program.GetNodoFromLists(Nodo) == MaxNodos[Atual].nodoAnterior) &&
+                        (Atual > 0))
+                    {
+                        MaxNodos[Atual].Esconder();
+                        MaxNodos[Atual].Deletar();
+                        MaxNodos.RemoveAt(Atual);
+                        MouseNodeHandler.MaxNodoSelecionado--;
+
+                        MaxNodos[Atual - 1].Ressurgir();
+                        AppGraphics.Camera.LookAt(new Vector2(0, 0), MaxNodos[Atual - 1].Size.X);
+                        MouseNodeHandler.SelectNodo(AppGraphics.MaxNodos[MouseNodeHandler.MaxNodoSelecionado].MainNodo.DrawNodo);
+                        CarregaInformações(MaxNodos[MouseNodeHandler.MaxNodoSelecionado].MainNodo.Nodo);
+                        return;
+                    }
+                    else
+                    {
+                        MaxNodos[Atual].Esconder();
+                        // Apaga todo os depois (apaga a linha seguinte de nodos)
+                        for (int i = Atual + 1; i < MaxNodos.Count; i++)
+                            MaxNodos.RemoveAt(Atual + 1);
+                    }
+                }
+                else
+                {
+                    MaxNodos[Atual].Esconder();
+                    // Apaga todo os depois (apaga a linha seguinte de nodos)
+                    for (int i = Atual + 1; i < MaxNodos.Count; i++)
+                        MaxNodos.RemoveAt(Atual + 1);
+                }
             }
+            else
+            {
+                ResetView();
+            }
+
             CarregaInformações(Nodo);
             // Cria o novo na posição 0,0
             AppGraphics.MaxNodos.Add(
-                new TDrawMaxNodo(Nodo, new Vector2(0, 0)));
+                new TDrawMaxNodo(Nodo, new Vector2(0, 0), nodoAtual));
             // Inicializa
             AppGraphics.MaxNodos[AppGraphics.MaxNodos.Count - 1].Inicializa();
             // Olha
-            AppGraphics.Camera.LookAt(new Vector2(0, 0));
+            AppGraphics.Camera.LookAt(new Vector2(0, 0), AppGraphics.MaxNodos[AppGraphics.MaxNodos.Count - 1].Size.X);
             MouseNodeHandler.MaxNodoSelecionado = AppGraphics.MaxNodos.Count - 1;
 
             MouseNodeHandler.SelectNodo(AppGraphics.MaxNodos[MouseNodeHandler.MaxNodoSelecionado].MainNodo.DrawNodo);
@@ -855,9 +957,15 @@ namespace VisualSort
                             {
                                 Renderer.rInfoInfos.Add(" Informações adicionais não disponíveis!", true);
                             }
+                            // listagem alfabética dos pesquisadores
+                            List<string> PesquisadoresAlfa = new List<string>();
+
                             for (int i = 0; i < iNodo.Ligações.Count; i++)
                                 if (iNodo.Ligações[i].Tipo == 0)
-                                    Renderer.rInfoLista.Add(Program.GetNodoFromLists(iNodo.Ligações[i]).Nome);
+                                    PesquisadoresAlfa.Add(Program.GetNodoFromLists(iNodo.Ligações[i]).Nome);
+                            PesquisadoresAlfa.Sort();
+                            for (int i = 0; i < PesquisadoresAlfa.Count; i++)
+                                Renderer.rInfoLista.Add(PesquisadoresAlfa[i]);
                             break;
                         }
                     // Livro
