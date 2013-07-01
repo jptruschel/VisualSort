@@ -97,11 +97,11 @@ namespace VisualSort
                 else
                     if (this.Selected)
                         if (AppGraphics.MaxNodos[Program.maxNodoSelecionado].Loops > 0)
-                            this.Color = AppGraphics.GetColorFromType(this.InfoNodo.Nodo.Tipo); //* (1 / AppGraphics.MaxNodos[Program.maxNodoSelecionado].Loops);
+                            this.Color = AppGraphics.GetColorFromType(this.InfoNodo.Nodo.Tipo, (this.InfoNodo.ISSN == null || this.InfoNodo.ISSN == "i" || this.InfoNodo.ISSN.Length < 2)); //* (1 / AppGraphics.MaxNodos[Program.maxNodoSelecionado].Loops);
                         else
-                            this.Color = AppGraphics.GetColorFromType(this.InfoNodo.Nodo.Tipo);
+                            this.Color = AppGraphics.GetColorFromType(this.InfoNodo.Nodo.Tipo, (this.InfoNodo.ISSN == null || this.InfoNodo.ISSN == "i" || this.InfoNodo.ISSN.Length < 2));
                     else
-                        this.Color = AppGraphics.GetColorFromType(this.InfoNodo.Nodo.Tipo);
+                        this.Color = AppGraphics.GetColorFromType(this.InfoNodo.Nodo.Tipo, (this.InfoNodo.ISSN == null || this.InfoNodo.ISSN == "i" || this.InfoNodo.ISSN.Length < 2));
                 Color cor = this.Color;
             //    if (this.Selected)
              //       cor = Color.Green;
@@ -437,7 +437,10 @@ namespace VisualSort
         public void LookAt(Vector2 pos, float MinSize)
         {
             _pos = pos;
-            _zoom = 800/MinSize;
+            if (MinSize > 0.001)
+                _zoom = 800 / MinSize;
+            else
+                _zoom = 1.0f;
         }
         // Get set position
         public Vector2 Pos
@@ -777,14 +780,17 @@ namespace VisualSort
         public static Vector2 ScreenCenter;
 
         // Retorna uma cor
-        public static Color GetColorFromType(int Tipo)
+        public static Color GetColorFromType(int Tipo, bool Conf)
         {
             switch (Tipo)
             {
                 case 0:
                     return Color.Azure;
                 case 1:
-                    return Color.GreenYellow;
+                    if (Conf)
+                        return Color.GreenYellow;
+                    else
+                        return Color.YellowGreen;
                 case 2:
                     return Color.SaddleBrown;
                 case 3:
@@ -793,8 +799,6 @@ namespace VisualSort
                     return Color.NavajoWhite;
                 case 5:
                     return Color.LightGreen;
-                case 6:
-                    return Color.DarkRed;
                 default:
                     return Color.Red;
             }

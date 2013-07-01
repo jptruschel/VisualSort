@@ -238,10 +238,12 @@ namespace VisualSort
                         else if (PArtigo.Name == "DETALHAMENTO-DO-ARTIGO" && reader.AttributeCount > 0)
                         {
                             artigo.ISSN = PArtigo.GetAttribute("ISSN");
+                            Program.mArtigos[ÍndiceArtigo].ISSN = artigo.ISSN;
                             artigo.PeriodicoOuConferencia = PArtigo.GetAttribute("TITULO-DO-PERIODICO-OU-REVISTA");
                             int indiceper = (int)Program.mPeriódicos.NovoNodo(artigo.PeriodicoOuConferencia,artigo.ISSN);
-                            Program.mArtigos[ÍndiceArtigo].AdicionaLigaçãoCom(new TPNodo(indiceper, 5));
-                            Periódicos.Add(indiceper);
+                            Program.mArtigos[ÍndiceArtigo].AdicionaLigaçãoCom(new TPNodo(indiceper, 3));
+                            Program.mPeriódicos[indiceper].AdicionaLigaçãoCom(Program.mArtigos[ÍndiceArtigo].Nodo);
+                            //Periódicos.Add(indiceper);
                             
                         }
                         else if (PArtigo.Name == "PALAVRAS-CHAVE" && reader.AttributeCount>0)
@@ -263,6 +265,7 @@ namespace VisualSort
                     }
                     if (ÍndiceArtigo > -1)
                     {
+                        Program.mArtigos[ÍndiceArtigo].ISSN = artigo.ISSN;
                         Program.mArtigos[ÍndiceArtigo].Data = Program.fArtigos.AdicionaInformação(artigo);
                         Program.mPessoas[Índice].AdicionaLigaçãoCom(Program.mArtigos[ÍndiceArtigo].Nodo);
                         Program.mArtigos[ÍndiceArtigo].AdicionaLigaçãoCom(Program.mPessoas[Índice].Nodo);
@@ -351,9 +354,11 @@ namespace VisualSort
                             else if (PTrab.Name == "DETALHAMENTO-DO-TRABALHO" && reader.AttributeCount > 0)
                             {
                                 artigo.ISSN = "i";
+                                Program.mArtigos[ÍndiceTrab].ISSN = "i";
                                 artigo.PeriodicoOuConferencia = PTrab.GetAttribute("NOME-DO-EVENTO");
                                 int indicec = (int)Program.mConferências.NovoNodo(artigo.PeriodicoOuConferencia);
                                 Program.mArtigos[ÍndiceTrab].AdicionaLigaçãoCom(new TPNodo(indicec, 5));
+                                Program.mConferências[indicec].AdicionaLigaçãoCom(Program.mArtigos[ÍndiceTrab].Nodo);
                                 Conferencias.Add(indicec);
                             }
                             else if (PTrab.Name == "PALAVRAS-CHAVE" && reader.AttributeCount > 0)
@@ -375,6 +380,7 @@ namespace VisualSort
                     }
                         if (ÍndiceTrab > -1)
                         {
+                            Program.mArtigos[ÍndiceTrab].ISSN = artigo.ISSN;
                             Program.mArtigos[ÍndiceTrab].Data = Program.fArtigos.AdicionaInformação(artigo);
                             Program.mPessoas[Índice].AdicionaLigaçãoCom(Program.mArtigos[ÍndiceTrab].Nodo);
                             foreach (int i in Autorest)
@@ -518,6 +524,7 @@ namespace VisualSort
             cap.Livro = reader.ReadString();
             cap.MeioDivulgação = reader.ReadString();
             int aux = reader.ReadInt32();
+            cap.PalavrasChave = new List<string>();
             for (int i = 0; i < aux; i++)
                 cap.PalavrasChave.Add(reader.ReadString());
             return cap;
@@ -554,6 +561,7 @@ namespace VisualSort
             livro.AnoPublicação = reader.ReadInt32();
             livro.MeioDivulgação = reader.ReadString();
             int aux = reader.ReadInt32();
+            livro.PalavrasChave = new List<string>();
             for (int i = 0; i < aux; i++)
                 livro.PalavrasChave.Add(reader.ReadString());
             return livro;
@@ -615,6 +623,7 @@ namespace VisualSort
             artigo.AnoPublicação = reader.ReadInt32();
             artigo.Natureza = reader.ReadString();
             int aux = reader.ReadInt32();
+            artigo.PalavrasChave = new List<string>();
             for (int i = 0; i < aux; i++)
                 artigo.PalavrasChave.Add(reader.ReadString());
             return artigo;
@@ -1224,6 +1233,7 @@ namespace VisualSort
             this.Nome = Nome;
             this.NomeNormalizado = StringFunctions.CustomNormalize(Nome);
             this.Data = Data;
+            this.ISSN = "i";
             this.Nodo = new TPNodo(-1, -1);
             this.Ligações = new List<TPNodo>();
             DrawNodo = null;
@@ -1313,7 +1323,10 @@ namespace VisualSort
                     sNome = Nome.ToLower();
                 sValue = Value.ToLower();
                 if (ForceEqual)
-                    return StringFunctions.CompareStr(Value, Nome, UseDistance, 2);
+                {
+                    if (StringFunctions.CompareStr(Value, Nome, UseDistance, 3))
+                        return true;
+                }
                 else
                 {
                     if (sValue == sNome)
