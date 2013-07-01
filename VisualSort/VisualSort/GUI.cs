@@ -600,7 +600,7 @@ namespace VisualSort
                             Clicking = true;
                             FirstClickPos = new Vector2(mouseState.X, mouseState.Y);
                         }
-                        Offset += (int)((prevWheelValue - currWheelValue) * 0.10);
+                        Offset += (int)((prevWheelValue - currWheelValue) * 0.05);
                     }
                     else
                     {
@@ -1504,7 +1504,7 @@ namespace VisualSort
                             Clicking = true;
                             FirstClickPos = new Vector2(mouseState.X, mouseState.Y);
                         }
-                        Offset += (int)((prevWheelValue - currWheelValue) * 0.10);
+                        Offset += (int)((prevWheelValue - currWheelValue) * 0.05);
                     }
                     else
                     {

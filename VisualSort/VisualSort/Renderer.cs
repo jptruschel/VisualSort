@@ -47,13 +47,14 @@ namespace VisualSort
         public static GUI.TGUICheckBox LeftSearchCheckBoxExato, LeftSearchCheckBoxShowOnGraph;
         public static List<TInfoNodo> SearchResults;
 
-        public static GUI.TGUIEditBox rInfoEditNome;
         public static GUI.TGUILabel rInfoTipoLista;
         public static GUI.TGUIList rInfoLista;
         public static GUI.TGUIMemo rInfoInfos;
         public static GUI.TGUIImgBtn rInfoOrgOpenPanel;
         public static GUI.TGUIPanel rInfoOrganPan;
         public static GUI.TGUIImgBtn[] rInfoOrganBut;
+        public static List<TFArtigo> ArtigosSorts;
+        public static List<TInfoNodo> ArtigosSortsI;
        
         // Retorna true se o Foco (mouse) está no Grafo (meio da tela)
         public bool isFocusOnGraph()
@@ -192,7 +193,7 @@ namespace VisualSort
 
             for (int Tip = 0; Tip < 6; Tip++)
                 if (FilterCheckBoxs[Tip].Checked)
-                    foreach (TInfoNodo nNodo in Program.mListas[Tip].ProcuraNodo(LeftSearchEdit.Text, LeftSearchCheckBoxExato.Checked, true, true))
+                    foreach (TInfoNodo nNodo in Program.mListas[Tip].ProcuraNodo(LeftSearchEdit.Text, LeftSearchCheckBoxExato.Checked, true, true, true))
                     {
                         SearchResults.Add(nNodo);
                         nNodo.Pesquisado = true;
@@ -250,6 +251,41 @@ namespace VisualSort
         public static bool OrganizeLeftOrgPanel(int Tag)
         {
             rInfoOrganPan.Visible = false;
+            rInfoLista.Items.Clear();
+
+            switch (Tag)
+            {
+                case 0:
+                    {
+                        break;
+                    }
+                case 1:
+                    {
+                        break;
+                    }
+                case 2:
+                    {
+                        break;
+                    }
+                case 3:
+                    {
+                        TFArtigo.SortListQualis(ArtigosSorts);
+                        foreach (TFArtigo sAr in ArtigosSorts)
+                            if (sAr.Qualis == "i")
+                                rInfoLista.Add("XX- "+ sAr.Título);
+                            else
+                                rInfoLista.Add(sAr.Qualis + "- " + sAr.Título);
+                        break;
+                    }
+                case 4:
+                    {
+                        break;
+                    }
+                default:
+                    {
+                        break;
+                    }
+            }
             return true;
         }
         // Redesenha o grafo
@@ -399,11 +435,7 @@ namespace VisualSort
             imgDivider2.AutoSize = false;
             imgDivider2.backgroundColor = Color.Black * 0f;
             imgDivider2.DrawImageResized = true;
-            rInfoEditNome = RightPanel.AddComponent(new GUI.TGUIEditBox(new Vector2(5, 60), new Vector2(RightPanel.Size.X-10, 25), "N/A")) as GUI.TGUIEditBox;
-            rInfoEditNome.ReadOnly = true;
-            rInfoEditNome.Font = 5;
-            rInfoEditNome.ResizeOnMouse = false;
-            rInfoInfos = RightPanel.AddComponent(new GUI.TGUIMemo(new Vector2(5, 95), new Vector2(RightPanel.Size.X - 10, 310))) as GUI.TGUIMemo;
+            rInfoInfos = RightPanel.AddComponent(new GUI.TGUIMemo(new Vector2(5, 60), new Vector2(RightPanel.Size.X - 10, 345))) as GUI.TGUIMemo;
             rInfoInfos.Font = 5;
             rInfoTipoLista = RightPanel.AddComponent(new GUI.TGUILabel(new Vector2(5, 415), Vector2.Zero, "N/A")) as GUI.TGUILabel;
             rInfoTipoLista.transparentBackground = true;
@@ -511,24 +543,9 @@ namespace VisualSort
             // Font
             DefaultFont = Content.Load<SpriteFont>("DefaultFont");
 
-            // Example
-            //Program.mPessoas.NovoNodo(new TInfoNodo("Leandro Krug Wives", new BPos(0,0)));
-          //  Program.mPessoas.NovoNodo(new TInfoNodo("Aline", new BPos(0, 1)));
-          //  Program.mPessoas.NovoNodo(new TInfoNodo("Mara Abel", new BPos(0, 2)));
-           // Program.GetNodoFromLists(new TPNodo(0, 0)).AdicionaLigaçãoCom(new TPNodo(1,0));
-           // Program.GetNodoFromLists(new TPNodo(0, 0)).AdicionaLigaçãoCom(new TPNodo(2, 0));
-          /*  for (int i = 1; i < 500; i++)
-            {
-                Program.mPessoas.NovoNodo(new TInfoNodo("n" + i, new BPos(0, 0)));
-                //Program.GetNodoFromLists(new TPNodo(0, 0)).AdicionaLigaçãoCom(new TPNodo(i, 0));
-                for (int j = 0; j < i; j++)
-                {
-                    Program.GetNodoFromLists(new TPNodo(j, 0)).AdicionaLigaçãoCom(new TPNodo(i, 0));
-                    Program.GetNodoFromLists(new TPNodo(i, 0)).AdicionaLigaçãoCom(new TPNodo(j, 0));
-                }
-            }*/
             MouseNodeHandler.MaxNodoSelecionado = -1;
-            AppGraphics.SelecionaNodoComVoltar(Program.mPessoas[0].Nodo, -1);
+
+           // AppGraphics.SelecionaNodoComVoltar(Program.mPessoas[0].Nodo, -1);
             isLoading = false;
         }
 

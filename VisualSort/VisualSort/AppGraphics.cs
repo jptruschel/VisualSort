@@ -146,7 +146,7 @@ namespace VisualSort
                         cor,
                         RotAngle,
                         new Vector2(128, 128), SpriteEffects.None, 0f);
-                if (InfoNodo.MesmoNome("Krug", false, false, true))
+                if (InfoNodo.MesmoNome("Krug", false, false, true, false))
                 {
                     spriteBatch.Draw(AppGraphics.LoadingTexture[4],
                     new Rectangle(
@@ -790,7 +790,7 @@ namespace VisualSort
                     if (Conf)
                         return Color.GreenYellow;
                     else
-                        return Color.YellowGreen;
+                        return Color.SpringGreen;
                 case 2:
                     return Color.SaddleBrown;
                 case 3:
@@ -878,7 +878,6 @@ namespace VisualSort
             if (Nodo != null)
             {
                 TInfoNodo iNodo = Program.GetNodoFromLists(Nodo);
-                Renderer.rInfoEditNome.Text = iNodo.Nome;
                 switch (Nodo.Tipo)
                 {
                     // Pessoa
@@ -903,13 +902,23 @@ namespace VisualSort
                             }
                             if (Go)
                             {
+                                Renderer.rInfoInfos.Add("Nome: " + Information.NomeCompleto, true);
                                 Renderer.rInfoInfos.Add("País: " + Information.País, true);
                                 Renderer.rInfoInfos.Add("Resumo: " + Information.TextoResumo, true);
                             }
                             else
                             {
+                                Renderer.rInfoInfos.Add("Nome: " + iNodo.Nome, true);
                                 Renderer.rInfoInfos.Add(" Informações adicionais não disponíveis!", true);
                             }
+                            Renderer.ArtigosSorts = new List<TFArtigo>();
+                            for (int i = 0; i < iNodo.Ligações.Count; i++)
+                                if (iNodo.Ligações[i].Tipo == 1)
+                                {
+                                    Renderer.ArtigosSorts.Add(Program.fArtigos.GetArtigo(Program.GetNodoFromLists(iNodo.Ligações[i]).Data));
+                                    Renderer.ArtigosSortsI.Add(Program.GetNodoFromLists(iNodo.Ligações[i]));
+                                }
+                            Renderer.OrganizeLeftOrgPanel(3);
                             break;
                         }
                     // Artigo
@@ -959,6 +968,7 @@ namespace VisualSort
                             }
                             else
                             {
+                                Renderer.rInfoInfos.Add("Título: " + iNodo.Nome, true);
                                 Renderer.rInfoInfos.Add(" Informações adicionais não disponíveis!", true);
                             }
                             // listagem alfabética dos pesquisadores
@@ -1009,6 +1019,7 @@ namespace VisualSort
                             }
                             else
                             {
+                                Renderer.rInfoInfos.Add("Título: " + iNodo.Nome, true);
                                 Renderer.rInfoInfos.Add(" Informações adicionais não disponíveis!", true);
                             }
                             for (int i = 0; i < iNodo.Ligações.Count; i++)
@@ -1043,6 +1054,7 @@ namespace VisualSort
                             }
                             else
                             {
+                                Renderer.rInfoInfos.Add("Nome: " + iNodo.Nome, true);
                                 Renderer.rInfoInfos.Add(" Informações adicionais não disponíveis!", true);
                             }
                             for (int i = 0; i < iNodo.Ligações.Count; i++)
@@ -1088,6 +1100,7 @@ namespace VisualSort
                             }
                             else
                             {
+                                Renderer.rInfoInfos.Add("Título: " + iNodo.Nome, true);
                                 Renderer.rInfoInfos.Add(" Informações adicionais não disponíveis!", true);
                             }
                             for (int i = 0; i < iNodo.Ligações.Count; i++)
@@ -1122,6 +1135,7 @@ namespace VisualSort
                             }
                             else
                             {
+                                Renderer.rInfoInfos.Add("Nome: " + iNodo.Nome, true);
                                 Renderer.rInfoInfos.Add(" Informações adicionais não disponíveis!", true);
                             }
                             for (int i = 0; i < iNodo.Ligações.Count; i++)

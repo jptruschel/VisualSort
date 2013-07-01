@@ -28,9 +28,15 @@ namespace VisualSort
         public static string blocInstituiçõesFileName = "inst_bloco";
         public static string CSVFileNamePeriódicos = "periodicos.csv";
         public static string CSVFileNameConverências = "conferencias.csv";
+        public static string mPessoasFileName = "mpessoas.dat";
+        public static string mArtigosFileName = "marts.dat";
+        public static string mLivrosFileName = "mlivrs.dat";
+        public static string mPeriódicosFileName = "mperds.dat";
+        public static string mCapítulosFileName = "mcaps.dat";
+        public static string mConferênciasFileName = "mconfs.dat";
         public static int MaxSelectedNodeSizeAlwaysText = 100;
         public static int MaxSelectedNodeLinesAlwaysText = 3;
-        public static string DiretorioRaiz = "tabelas\\";
+        public static string DiretorioRaiz = "data\\";
     }
 
     // Um vetor de 2 dimensões de inteiros
@@ -144,7 +150,7 @@ namespace VisualSort
     {
         public static void PeriodicosCSV()
         {
-            StreamReader reader = new StreamReader(File.Open(Constants.DiretorioRaiz+Constants.CSVFileNamePeriódicos, FileMode.Open),Encoding.GetEncoding("iso-8859-1"));
+            StreamReader reader = new StreamReader(File.Open(Constants.DiretorioRaiz + Constants.CSVFileNamePeriódicos, FileMode.Open), Encoding.GetEncoding("iso-8859-1"));
             reader.ReadLine(); //Lê a linha que contém informações inúteis
             foreach (string s in reader.ReadToEnd().Split('\n'))
             {
@@ -167,7 +173,7 @@ namespace VisualSort
 
         public static void ConferenciasCSV()
         {
-            StreamReader reader = new StreamReader(File.Open(Constants.DiretorioRaiz+Constants.CSVFileNameConverências, FileMode.Open), Encoding.GetEncoding("iso-8859-1"));
+            StreamReader reader = new StreamReader(File.Open(Constants.DiretorioRaiz + Constants.CSVFileNameConverências, FileMode.Open), Encoding.GetEncoding("iso-8859-1"));
             reader.ReadLine();//Lê a linha que contém informações inúteis
             foreach (string s in reader.ReadToEnd().Split('\n'))
             {
@@ -238,9 +244,18 @@ namespace VisualSort
                         else if (PArtigo.Name == "DETALHAMENTO-DO-ARTIGO" && reader.AttributeCount > 0)
                         {
                             artigo.ISSN = PArtigo.GetAttribute("ISSN");
+                            
                             Program.mArtigos[ÍndiceArtigo].ISSN = artigo.ISSN;
                             artigo.PeriodicoOuConferencia = PArtigo.GetAttribute("TITULO-DO-PERIODICO-OU-REVISTA");
                             int indiceper = (int)Program.mPeriódicos.NovoNodo(artigo.PeriodicoOuConferencia,artigo.ISSN);
+                            try
+                            {
+                                artigo.Qualis = Program.fPeridódicos.GetPeriódico(Program.mPeriódicos[indiceper].Data).Qualis;
+                            }
+                            catch (Exception e)
+                            {
+                                artigo.Qualis = "i";
+                            }
                             Program.mArtigos[ÍndiceArtigo].AdicionaLigaçãoCom(new TPNodo(indiceper, 3));
                             Program.mPeriódicos[indiceper].AdicionaLigaçãoCom(Program.mArtigos[ÍndiceArtigo].Nodo);
                             //Periódicos.Add(indiceper);
@@ -357,6 +372,12 @@ namespace VisualSort
                                 Program.mArtigos[ÍndiceTrab].ISSN = "i";
                                 artigo.PeriodicoOuConferencia = PTrab.GetAttribute("NOME-DO-EVENTO");
                                 int indicec = (int)Program.mConferências.NovoNodo(artigo.PeriodicoOuConferencia);
+                                try{
+                                artigo.Qualis = Program.fConferências.GetConferência(Program.mConferências[indicec].Data).Qualis;
+                                }catch(Exception e )
+                                {
+                                    artigo.Qualis = "i";
+                                }
                                 Program.mArtigos[ÍndiceTrab].AdicionaLigaçãoCom(new TPNodo(indicec, 5));
                                 Program.mConferências[indicec].AdicionaLigaçãoCom(Program.mArtigos[ÍndiceTrab].Nodo);
                                 Conferencias.Add(indicec);
@@ -573,6 +594,7 @@ namespace VisualSort
         public byte Tipo;                  //1 = Periodico; 2 = Conferencia   
         public string Título;              // Título
         public string ISSN;             // ISSN relativo
+        public string Qualis;
         public string PeriodicoOuConferencia;        // Nome do periódico ou conferencia
         public string MeioDivulgação;   // Meio de Divulgação da Produção
         public string Idioma;           // Idioma da Produção
@@ -587,7 +609,7 @@ namespace VisualSort
                 aux = "Tipo : Periódico";
             else
                 aux = "Tipo : Conferencia";
-            aux += "\nTítulo: " + this.Título + "\nISSN :" + this.ISSN + "\nPeriodico :" + this.PeriodicoOuConferencia + "\nMeio de Divulgação" + this.MeioDivulgação + "\nIdioma :" + this.Idioma + "\nAno de Publicação :" + this.AnoPublicação.ToString() + "\nNatureza :" + this.Natureza + "\nPalavras-Chave :";
+            aux += "\nTítulo: " + this.Título + "\nISSN :" + this.ISSN +"\nQualis :" + this.Qualis + "\nPeriodico :" + this.PeriodicoOuConferencia + "\nMeio de Divulgação" + this.MeioDivulgação + "\nIdioma :" + this.Idioma + "\nAno de Publicação :" + this.AnoPublicação.ToString() + "\nNatureza :" + this.Natureza + "\nPalavras-Chave :";
             if (this.PalavrasChave != null)
             {
                 foreach (string s in this.PalavrasChave)
@@ -596,11 +618,150 @@ namespace VisualSort
             return aux;
         }
 
+        private static void InsertionListQualis(List<TFArtigo> lista, int h, int primeiro)
+        {
+            for (int k = primeiro + h; k < lista.Count; k = k + h)//insere um elemento no sub-array já ordenado n-1 vezes, ou seja, até que todos os elementos estejam no arranjo ordenado (o primeiro elemento do sub-arranjo esta por definição ordenado, poi é o unico deste arranjo)
+            {
+                for (int j = k; j > primeiro && string.Compare(lista[j - h].Qualis, lista[j].Qualis) > 0 || lista[j].Qualis == "i"; j = j - h) //Enquanto o elemento anterior ao elemento a ser inserido no array ordenado for menor que e
+                {
+                    TFArtigo aux = lista[j];
+                    lista[j] = lista[j - h];
+                    lista[j - h] = aux;
+                }
+            }
+        }
+
+        private static void InsertionListISSN(List<TFArtigo> lista, int h, int primeiro)
+        {
+            for (int k = primeiro + h; k < lista.Count; k = k + h)//insere um elemento no sub-array já ordenado n-1 vezes, ou seja, até que todos os elementos estejam no arranjo ordenado (o primeiro elemento do sub-arranjo esta por definição ordenado, poi é o unico deste arranjo)
+            {
+                for (int j = k; j > primeiro && string.Compare(lista[j - h].ISSN, lista[j].ISSN) > 0 || lista[j].ISSN == "i"; j = j - h) //Enquanto o elemento anterior ao elemento a ser inserido no array ordenado for menor que e
+                {
+                    TFArtigo aux = lista[j];
+                    lista[j] = lista[j - h];
+                    lista[j - h] = aux;
+                }
+            }
+        }
+
+        private static void InsertionListAno(List<TFArtigo> lista, int h, int primeiro)
+        {
+            for (int k = primeiro + h; k < lista.Count; k = k + h)//insere um elemento no sub-array já ordenado n-1 vezes, ou seja, até que todos os elementos estejam no arranjo ordenado (o primeiro elemento do sub-arranjo esta por definição ordenado, poi é o unico deste arranjo)
+            {
+                for (int j = k; j > primeiro && lista[j - h].AnoPublicação > lista[j].AnoPublicação; j = j - h) //Enquanto o elemento anterior ao elemento a ser inserido no array ordenado for menor que e
+                {
+                    TFArtigo aux = lista[j];
+                    lista[j] = lista[j - h];
+                    lista[j - h] = aux;
+                }
+            }
+        }
+
+        private static void InsertionListNatureza(List<TFArtigo> lista, int h, int primeiro)
+        {
+            for (int k = primeiro + h; k < lista.Count; k = k + h)//insere um elemento no sub-array já ordenado n-1 vezes, ou seja, até que todos os elementos estejam no arranjo ordenado (o primeiro elemento do sub-arranjo esta por definição ordenado, poi é o unico deste arranjo)
+            {
+                for (int j = k; j > primeiro && lista[j - h].Natureza[0] > lista[j].Natureza[0]; j = j - h) //Enquanto o elemento anterior ao elemento a ser inserido no array ordenado for menor que e
+                {
+                    TFArtigo aux = lista[j];
+                    lista[j] = lista[j - h];
+                    lista[j - h] = aux;
+                }
+            }
+        }
+
+        private static void InsertionListCoaut(List<TFArtigo> lista, List<TInfoNodo> Nodos, int h, int primeiro)
+        {
+            for (int k = primeiro + h; k < lista.Count; k = k + h)//insere um elemento no sub-array já ordenado n-1 vezes, ou seja, até que todos os elementos estejam no arranjo ordenado (o primeiro elemento do sub-arranjo esta por definição ordenado, poi é o unico deste arranjo)
+            {
+                for (int j = k; j > primeiro && Nodos[j - h].Ligações.Count > Nodos[j].Ligações.Count; j = j - h) //Enquanto o elemento anterior ao elemento a ser inserido no array ordenado for menor que e
+                {
+                    TFArtigo aux = lista[j];
+                    lista[j] = lista[j - h];
+                    lista[j - h] = aux;
+                }
+            }
+        }
+
+        public static void SortListQualis(List<TFArtigo> lista)
+        {
+            int h, i;
+            h = (int)Math.Floor((double)lista.Count / 2);
+            if (h % 2 != 0)
+                h--;
+            for (; h >= 1; h /= 2)
+            {
+                for (i = 0; i < h; i++)
+                    InsertionListQualis(lista, h, i);
+            }
+        }
+
+        public static void SortListISSN(List<TFArtigo> lista)
+        {
+            int h, i;
+            h = (int)Math.Floor((double)lista.Count / 2);
+            if (h % 2 != 0)
+                h--;
+            for (; h >= 1; h /= 2)
+            {
+                for (i = 0; i < h; i++)
+                    InsertionListISSN(lista, h, i);
+            }
+        }
+
+        public static void SortListAno(List<TFArtigo> lista)
+        {
+            int h, i;
+            h = (int)Math.Floor((double)lista.Count / 2);
+            if (h % 2 != 0)
+                h--;
+            for (; h >= 1; h /= 2)
+            {
+                for (i = 0; i < h; i++)
+                    InsertionListAno(lista, h, i);
+            }
+        }
+
+        public static void SortListNatureza(List<TFArtigo> lista)
+        {
+            int h, i;
+            h = (int)Math.Floor((double)lista.Count / 2);
+            if (h % 2 != 0)
+                h--;
+            for (; h >= 1; h /= 2)
+            {
+                for (i = 0; i < h; i++)
+                    InsertionListAno(lista, h, i);
+            }
+        }
+
+        public static void SortListCoaut(List<TFArtigo> lista, List<TInfoNodo> InfoNodos)
+        {
+            int h, i;
+            h = (int)Math.Floor((double)lista.Count / 2);
+            if (h % 2 != 0)
+                h--;
+            for (; h >= 1; h /= 2)
+            {
+                for (i = 0; i < h; i++)
+                    InsertionListCoaut(lista, InfoNodos, h, i);
+            }
+        }
+
+
         public static void GravaBinário(BinaryWriter writer, TFArtigo artigo)
         {
             writer.Write(artigo.Tipo);
             writer.Write(artigo.Título);
-            writer.Write(artigo.ISSN);
+            if (artigo.ISSN == null)
+                writer.Write(string.Empty);
+            else
+                writer.Write(artigo.ISSN);
+            if (artigo.Qualis == null)
+                writer.Write(string.Empty);
+            else
+                writer.Write(artigo.Qualis);
+
             writer.Write(artigo.PeriodicoOuConferencia);
             writer.Write(artigo.MeioDivulgação);
             writer.Write(artigo.Idioma);
@@ -617,6 +778,7 @@ namespace VisualSort
             artigo.Tipo = reader.ReadByte();
             artigo.Título = reader.ReadString();
             artigo.ISSN = reader.ReadString();
+            artigo.Qualis = reader.ReadString();
             artigo.PeriodicoOuConferencia = reader.ReadString();
             artigo.MeioDivulgação = reader.ReadString();
             artigo.Idioma = reader.ReadString();
@@ -1309,7 +1471,7 @@ namespace VisualSort
 
         }
         // Função que verifica se o nome de entrada é o mesmo (ou seja, se todas as palavras de Value estão em Nome)
-        public bool MesmoNome(string Value, bool ForceEqual, bool UseDistance, bool useNormalizedName)
+        public bool MesmoNome(string Value, bool ForceEqual, bool UseDistance, bool useNormalizedName, bool Precise)
         {
             if (Nome == null)
                 return false;
@@ -1324,7 +1486,7 @@ namespace VisualSort
                 sValue = Value.ToLower();
                 if (ForceEqual)
                 {
-                    if (StringFunctions.CompareStr(Value, Nome, UseDistance, 3))
+                    if (StringFunctions.CompareStr(sValue, sNome, false, 0))
                         return true;
                 }
                 else
@@ -1367,6 +1529,9 @@ namespace VisualSort
                         if (vsplits.Length == UpperCount)
                             return true;
                     }
+                    if (Precise)
+                        if (StringFunctions.CompareStr(sValue, sNome, UseDistance, 3))
+                            return true;
                 }
 
                 return false;
@@ -1443,7 +1608,7 @@ namespace VisualSort
         {
             foreach (TInfoNodo Nodo in Elementos)
             {
-                if (ProcuraNodo(Nodo.Nome, true, false, false).Count == 0)
+                if (ProcuraNodo(Nodo.Nome, true, false, false, false).Count == 0)
                 {
                     Add(Nodo);
                     this[this.Count - 1].Nodo = new TPNodo(this.Count-1, Tipo);
@@ -1469,7 +1634,7 @@ namespace VisualSort
         // Cria um novo elemento dado somente um nome
         public int NovoNodo(string Nome)
         {
-            List<TInfoNodo> Lista = ProcuraNodo(Nome, true, false, false);
+            List<TInfoNodo> Lista = ProcuraNodo(Nome, true, false, false, false);
             if (Lista.Count == 0)
             {
                 Add(new TInfoNodo(Nome, new BPos(-1, -1)));
@@ -1503,9 +1668,9 @@ namespace VisualSort
          }
 
          // Funções para procurar todos os Elementos com dado Critério
-         public List<TInfoNodo> ProcuraNodo(string Nome, bool SomenteIgual, bool useDistance, bool useNormalizedName)
+         public List<TInfoNodo> ProcuraNodo(string Nome, bool SomenteIgual, bool useDistance, bool useNormalizedName, bool Precise)
         {
-            return this.FindAll(p => p.MesmoNome(Nome, SomenteIgual, useDistance, useNormalizedName));
+            return this.FindAll(p => p.MesmoNome(Nome, SomenteIgual, useDistance, useNormalizedName, Precise));
         }
         public List<TInfoNodo> ProcuraNodoISSN(string ISSN, bool SomenteIgual)
         {

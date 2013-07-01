@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
+using System.Windows.Forms;
 
 namespace VisualSort
 {
@@ -70,32 +71,63 @@ namespace VisualSort
 
         static void Main(string[] args)
         {
-            // Inicializa
-            fPessoas.InicializaGravação();
-            fArtigos.InicializaGravação();
-            fLivros.InicializaGravação();
-            fPeridódicos.InicializaGravação();
-            fCapítulos.InicializaGravação();
-            fConferências.InicializaGravação();
-            CSVBIZU.ConferenciasCSV();
-            CSVBIZU.PeriodicosCSV();
-            XMLBIZU.ReadFromXML(Constants.DiretorioRaiz + "arquivo0.xml");
-            XMLBIZU.ReadFromXML(Constants.DiretorioRaiz + "arquivo1.xml");
-           /* foreach (var path in Directory.GetFiles(@Constants.DiretorioRaiz))
+            bool LoadAgain = true;
+            if (File.Exists(Constants.DiretorioRaiz + Constants.mPessoasFileName) &&
+                File.Exists(Constants.DiretorioRaiz + Constants.mArtigosFileName) &&
+                File.Exists(Constants.DiretorioRaiz + Constants.mLivrosFileName) &&
+                File.Exists(Constants.DiretorioRaiz + Constants.mPeriódicosFileName) &&
+                File.Exists(Constants.DiretorioRaiz + Constants.mCapítulosFileName) &&
+                File.Exists(Constants.DiretorioRaiz + Constants.mConferênciasFileName))
             {
-                if (System.IO.Path.GetExtension(path) == ".xml")
+                if (MessageBox.Show("Estão disponíveis dados pré-processados. Você gostaria de carregá-los? Se escolher 'Não', o banco de dados será refeito.", "Recarregar Dados Pré-Processados",
+                    MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    Console.WriteLine(path);
-                    XMLBIZU.ReadFromXML(path);
+                    LoadAgain = false;
                 }
-            }*/
-            fPessoas.FinalizaGravação();
-            fArtigos.FinalizaGravação();
-            fLivros.FinalizaGravação();
-            fPeridódicos.FinalizaGravação();
-            fCapítulos.FinalizaGravação();
-            fConferências.FinalizaGravação();
-
+                else
+                    LoadAgain = true;
+            }
+            // Inicializa
+            if (LoadAgain)
+            {
+                fPessoas.InicializaGravação();
+                fArtigos.InicializaGravação();
+                fLivros.InicializaGravação();
+                fPeridódicos.InicializaGravação();
+                fCapítulos.InicializaGravação();
+                fConferências.InicializaGravação();
+                CSVBIZU.ConferenciasCSV();
+                CSVBIZU.PeriodicosCSV();
+                foreach (var path in Directory.GetFiles(@Constants.DiretorioRaiz))
+                {
+                    if (System.IO.Path.GetExtension(path) == ".xml")
+                    {
+                        Console.WriteLine(path);
+                        XMLBIZU.ReadFromXML(path);
+                    }
+                }
+                fPessoas.FinalizaGravação();
+                fArtigos.FinalizaGravação();
+                fLivros.FinalizaGravação();
+                fPeridódicos.FinalizaGravação();
+                fCapítulos.FinalizaGravação();
+                fConferências.FinalizaGravação();
+                mPessoas.GravaTBigList(Constants.DiretorioRaiz + Constants.mPessoasFileName);
+                mArtigos.GravaTBigList(Constants.DiretorioRaiz + Constants.mArtigosFileName);
+                mLivros.GravaTBigList(Constants.DiretorioRaiz + Constants.mLivrosFileName);
+                mPeriódicos.GravaTBigList(Constants.DiretorioRaiz + Constants.mPeriódicosFileName);
+                mCapítulos.GravaTBigList(Constants.DiretorioRaiz + Constants.mCapítulosFileName);
+                mConferências.GravaTBigList(Constants.DiretorioRaiz + Constants.mConferênciasFileName);
+            }
+            else
+            {
+                mPessoas = TBigList.LeTBigList(Constants.DiretorioRaiz + Constants.mPessoasFileName);
+                mArtigos = TBigList.LeTBigList(Constants.DiretorioRaiz + Constants.mArtigosFileName);
+                mLivros = TBigList.LeTBigList(Constants.DiretorioRaiz + Constants.mLivrosFileName);
+                mPeriódicos = TBigList.LeTBigList(Constants.DiretorioRaiz + Constants.mPeriódicosFileName);
+                mCapítulos = TBigList.LeTBigList(Constants.DiretorioRaiz + Constants.mCapítulosFileName);
+                mConferências = TBigList.LeTBigList(Constants.DiretorioRaiz + Constants.mConferênciasFileName);
+            }
             using (Renderer game = new Renderer())
             {
                 game.IsMouseVisible = true;
